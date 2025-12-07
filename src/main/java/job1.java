@@ -1253,105 +1253,132 @@ public class job1 {
           pause(3000);
           
           // Step 8: Click on "Edit" option
-          // First, wait for any element related to editing to appear
-          try {
-              test.log(Status.INFO, "Waiting for edit-related elements to appear");
-              wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(., 'Edit') or contains(., 'edit')]")));
-              test.log(Status.INFO, "Found edit-related element");
-          } catch (Exception e) {
-              test.log(Status.WARNING, "No edit-related element found immediately: " + e.getMessage());
-          }
-          
-          // Add a longer pause to ensure the UI has time to render, especially for dialogs
-          pause(4000);
-          
-          // Debug: Print all visible text on the page to see what's actually there
-          try {
-              String pageText = driver.findElement(By.tagName("body")).getText();
-              test.log(Status.INFO, "Page contains text: " + (pageText.length() > 500 ? pageText.substring(0, 500) + "..." : pageText));
-          } catch (Exception e) {
-              test.log(Status.WARNING, "Could not get page text: " + e.getMessage());
-          }
-          
-          // Step 8: Click on "Edit" option
           test.log(Status.INFO, "Clicking Edit option");
           try {
-              // Try to find the Edit option in different possible locations, accounting for dialog context
-              test.log(Status.INFO, "Attempting to find Edit option as list item within possible dialog");
-              wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiDialog')]//li[normalize-space()='Edit'] | //li[normalize-space()='Edit']")));
-              click(By.xpath("//*[contains(@class, 'MuiDialog')]//li[normalize-space()='Edit'] | //li[normalize-space()='Edit']"));
-              test.log(Status.INFO, "Clicked Edit option successfully as list item");
+              // First, click on the three dots menu to reveal the edit option
+              test.log(Status.INFO, "Attempting to find and click three dots menu");
+              // More specific selector for the three dots button based on the provided HTML
+              wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class, 'MuiIconButton-root') and contains(@class, 'MuiIconButton-sizeSmall') and .//svg[@viewBox='0 0 24 24' and .//path[@d='M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2']]")));
+              click(By.xpath("//button[contains(@class, 'MuiIconButton-root') and contains(@class, 'MuiIconButton-sizeSmall') and .//svg[@viewBox='0 0 24 24' and .//path[@d='M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2']]"));
+              test.log(Status.INFO, "Clicked three dots menu successfully");
+              pause(1500); // Increased wait time for menu to open
+              
+              // Now click on the Edit option
+              test.log(Status.INFO, "Attempting to find Edit option in menu");
+              wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']")));
+              click(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']"));
+              test.log(Status.INFO, "Clicked Edit option successfully");
           } catch (Exception e) {
-              test.log(Status.WARNING, "Could not click Edit option as list item: " + e.getMessage() + ", trying button approach");
+              test.log(Status.WARNING, "Could not click Edit option through menu: " + e.getMessage() + ", trying alternative approaches");
               try {
-                  test.log(Status.INFO, "Attempting to find Edit option as button within possible dialog");
-                  wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]")));
-                  click(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]"));
-                  test.log(Status.INFO, "Clicked Edit option successfully as button");
+                  // Alternative approach: Try a more general three dots selector
+                  test.log(Status.INFO, "Attempting alternative three dots selector");
+                  wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class, 'MuiIconButton-root') and .//*[local-name()='svg' and @viewBox='0 0 24 24']]")));
+                  click(By.xpath("//button[contains(@class, 'MuiIconButton-root') and .//*[local-name()='svg' and @viewBox='0 0 24 24']]"));
+                  test.log(Status.INFO, "Clicked three dots menu with alternative selector");
+                  pause(1500); // Wait for menu to open
+                  
+                  // Now click on the Edit option
+                  test.log(Status.INFO, "Attempting to find Edit option in menu with alternative approach");
+                  wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']")));
+                  click(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']"));
+                  test.log(Status.INFO, "Clicked Edit option successfully with alternative approach");
               } catch (Exception e2) {
-                  test.log(Status.WARNING, "Could not click Edit option as button: " + e2.getMessage() + ", trying more general approach");
+                  test.log(Status.WARNING, "Could not click Edit option through menu with alternative approach: " + e2.getMessage() + ", trying JavaScript click");
                   try {
-                      // Try a more general approach to find any Edit button, considering dialog context
-                      java.util.List<WebElement> editButtons = driver.findElements(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]"));
-                      test.log(Status.INFO, "Found " + editButtons.size() + " buttons containing 'Edit' (excluding Create)");
+                      // JavaScript click as last resort for three dots button
+                      test.log(Status.INFO, "Attempting JavaScript click on three dots menu");
+                      js.executeScript("document.querySelector('button.MuiIconButton-root.MuiIconButton-sizeSmall svg').closest('button').click();");
+                      test.log(Status.INFO, "Clicked three dots menu with JavaScript");
+                      pause(1500); // Wait for menu to open
                       
-                      if (!editButtons.isEmpty()) {
-                          test.log(Status.INFO, "Attempting to click first Edit button");
-                          click(By.xpath("(//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))])[1]"));
-                          test.log(Status.INFO, "Clicked first Edit button successfully");
-                      } else {
-                          // Try to find any element with text 'Edit'
-                          test.log(Status.INFO, "No buttons with 'Edit' found, trying any element with 'Edit' text");
-                          java.util.List<WebElement> editElements = driver.findElements(By.xpath("//*[contains(., 'Edit') and not(contains(., 'Create'))]"));
-                          test.log(Status.INFO, "Found " + editElements.size() + " elements containing 'Edit'");
-                          
-                          if (!editElements.isEmpty()) {
-                              test.log(Status.INFO, "Attempting to click first Edit element");
-                              click(By.xpath("(//*[contains(., 'Edit') and not(contains(., 'Create'))])[1]"));
-                              test.log(Status.INFO, "Clicked first Edit element successfully");
-                          } else {
-                              // Try an even more general approach - look for any element that might be an edit action
-                              test.log(Status.INFO, "Still no Edit elements found, trying to find common edit action patterns");
-                              java.util.List<WebElement> possibleEditElements = driver.findElements(By.xpath("//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit']"));
-                              test.log(Status.INFO, "Found " + possibleEditElements.size() + " elements with edit-related classes or attributes");
-                              
-                              if (!possibleEditElements.isEmpty()) {
-                                  test.log(Status.INFO, "Attempting to click first element with edit-related attributes");
-                                  click(By.xpath("(//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit'])[1]"));
-                                  test.log(Status.INFO, "Clicked first element with edit-related attributes successfully");
-                              } else {
-                                  // Last resort: Try to find ANY button and click the first one
-                                  test.log(Status.INFO, "Still no Edit elements found, trying to find ANY button");
-                                  java.util.List<WebElement> allButtons = driver.findElements(By.tagName("button"));
-                                  test.log(Status.INFO, "Found " + allButtons.size() + " total buttons");
+                      // Now click on the Edit option
+                      test.log(Status.INFO, "Attempting to find Edit option in menu with JavaScript approach");
+                      wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']")));
+                      click(By.xpath("//*[contains(@class, 'MuiMenuItem-root') and normalize-space()='Edit'] | //li[normalize-space()='Edit']"));
+                      test.log(Status.INFO, "Clicked Edit option successfully with JavaScript approach");
+                  } catch (Exception e3) {
+                      test.log(Status.WARNING, "Could not click Edit option through menu with JavaScript: " + e3.getMessage() + ", trying direct approach");
+                      try {
+                          // Try to find the Edit option in different possible locations, accounting for dialog context
+                          test.log(Status.INFO, "Attempting to find Edit option as list item within possible dialog");
+                          wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiDialog')]//li[normalize-space()='Edit'] | //li[normalize-space()='Edit']")));
+                          click(By.xpath("//*[contains(@class, 'MuiDialog')]//li[normalize-space()='Edit'] | //li[normalize-space()='Edit']"));
+                          test.log(Status.INFO, "Clicked Edit option successfully as list item");
+                      } catch (Exception e4) {
+                          test.log(Status.WARNING, "Could not click Edit option as list item: " + e.getMessage() + ", trying button approach");
+                          try {
+                              test.log(Status.INFO, "Attempting to find Edit option as button within possible dialog");
+                              wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]")));
+                              click(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]"));
+                              test.log(Status.INFO, "Clicked Edit option successfully as button");
+                          } catch (Exception e2) {
+                              test.log(Status.WARNING, "Could not click Edit option as button: " + e2.getMessage() + ", trying more general approach");
+                              try {
+                                  // Try a more general approach to find any Edit button, considering dialog context
+                                  java.util.List<WebElement> editButtons = driver.findElements(By.xpath("//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))]"));
+                                  test.log(Status.INFO, "Found " + editButtons.size() + " buttons containing 'Edit' (excluding Create)");
                                   
-                                  if (!allButtons.isEmpty()) {
-                                      test.log(Status.INFO, "Attempting to click first button");
-                                      click(By.xpath("(//button)[1]"));
-                                      test.log(Status.INFO, "Clicked first button successfully");
+                                  if (!editButtons.isEmpty()) {
+                                      test.log(Status.INFO, "Attempting to click first Edit button");
+                                      click(By.xpath("(//*[contains(@class, 'MuiDialog')]//button[contains(., 'Edit') and not(contains(., 'Create'))] | //button[contains(., 'Edit') and not(contains(., 'Create'))])[1]"));
+                                      test.log(Status.INFO, "Clicked first Edit button successfully");
                                   } else {
-                                      throw new RuntimeException("No Edit elements or buttons found at all");
+                                      // Try to find any element with text 'Edit'
+                                      test.log(Status.INFO, "No buttons with 'Edit' found, trying any element with 'Edit' text");
+                                      java.util.List<WebElement> editElements = driver.findElements(By.xpath("//*[contains(., 'Edit') and not(contains(., 'Create'))]"));
+                                      test.log(Status.INFO, "Found " + editElements.size() + " elements containing 'Edit'");
+                                      
+                                      if (!editElements.isEmpty()) {
+                                          test.log(Status.INFO, "Attempting to click first Edit element");
+                                          click(By.xpath("(//*[contains(., 'Edit') and not(contains(., 'Create'))])[1]"));
+                                          test.log(Status.INFO, "Clicked first Edit element successfully");
+                                      } else {
+                                          // Try an even more general approach - look for any element that might be an edit action
+                                          test.log(Status.INFO, "Still no Edit elements found, trying to find common edit action patterns");
+                                          java.util.List<WebElement> possibleEditElements = driver.findElements(By.xpath("//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit']"));
+                                          test.log(Status.INFO, "Found " + possibleEditElements.size() + " elements with edit-related classes or attributes");
+                                          
+                                          if (!possibleEditElements.isEmpty()) {
+                                              test.log(Status.INFO, "Attempting to click first element with edit-related attributes");
+                                              click(By.xpath("(//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit'])[1]"));
+                                              test.log(Status.INFO, "Clicked first element with edit-related attributes successfully");
+                                          } else {
+                                              // Last resort: Try to find ANY button and click the first one
+                                              test.log(Status.INFO, "Still no Edit elements found, trying to find ANY button");
+                                              java.util.List<WebElement> allButtons = driver.findElements(By.tagName("button"));
+                                              test.log(Status.INFO, "Found " + allButtons.size() + " total buttons");
+                                              
+                                              if (!allButtons.isEmpty()) {
+                                                  test.log(Status.INFO, "Attempting to click first button");
+                                                  click(By.xpath("(//button)[1]"));
+                                                  test.log(Status.INFO, "Clicked first button successfully");
+                                              } else {
+                                                  throw new RuntimeException("No Edit elements or buttons found at all");
+                                              }
+                                          }
+                                      }
+                                  }
+                              } catch (Exception e3) {
+                                  test.log(Status.WARNING, "Could not click Edit option with general approach: " + e3.getMessage() + ", trying JavaScript click");
+                                  try {
+                                      test.log(Status.INFO, "Attempting JavaScript click on Edit option as button");
+                                      jsClick(By.xpath("//button[contains(., 'Edit')]"));
+                                      test.log(Status.INFO, "JavaScript click on Edit button completed");
+                                  } catch (Exception e4) {
+                                      test.log(Status.WARNING, "Could not click Edit option as button with JavaScript: " + e4.getMessage() + ", trying any Edit element");
+                                      try {
+                                          test.log(Status.INFO, "Attempting JavaScript click on any Edit element");
+                                          jsClick(By.xpath("//*[contains(., 'Edit') and not(contains(., 'Create'))]"));
+                                          test.log(Status.INFO, "JavaScript click on Edit element completed");
+                                      } catch (Exception e5) {
+                                          test.log(Status.WARNING, "Could not click Edit element with JavaScript: " + e5.getMessage() + ", trying any element with edit-like attributes");
+                                          test.log(Status.INFO, "Attempting JavaScript click on element with edit-like attributes");
+                                          jsClick(By.xpath("//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit']"));
+                                          test.log(Status.INFO, "JavaScript click on element with edit-like attributes completed");
+                                      }
                                   }
                               }
-                          }
-                      }
-                  } catch (Exception e3) {
-                      test.log(Status.WARNING, "Could not click Edit option with general approach: " + e3.getMessage() + ", trying JavaScript click");
-                      try {
-                          test.log(Status.INFO, "Attempting JavaScript click on Edit option as button");
-                          jsClick(By.xpath("//button[contains(., 'Edit')]"));
-                          test.log(Status.INFO, "JavaScript click on Edit button completed");
-                      } catch (Exception e4) {
-                          test.log(Status.WARNING, "Could not click Edit option as button with JavaScript: " + e4.getMessage() + ", trying any Edit element");
-                          try {
-                              test.log(Status.INFO, "Attempting JavaScript click on any Edit element");
-                              jsClick(By.xpath("//*[contains(., 'Edit') and not(contains(., 'Create'))]"));
-                              test.log(Status.INFO, "JavaScript click on Edit element completed");
-                          } catch (Exception e5) {
-                              test.log(Status.WARNING, "Could not click Edit element with JavaScript: " + e5.getMessage() + ", trying any element with edit-like attributes");
-                              test.log(Status.INFO, "Attempting JavaScript click on element with edit-like attributes");
-                              jsClick(By.xpath("//*[contains(@class, 'edit') or contains(@class, 'Edit') or @aria-label='edit' or @aria-label='Edit']"));
-                              test.log(Status.INFO, "JavaScript click on element with edit-like attributes completed");
                           }
                       }
                   }
