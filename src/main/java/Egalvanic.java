@@ -200,54 +200,57 @@ public class Egalvanic {
   }
   
   static void setupDriver(String browserType) {
-      switch(browserType.toLowerCase()) {
-          case "firefox":
-              WebDriverManager.firefoxdriver().setup();
-              driver = new FirefoxDriver();
-              break;
-          case "edge":
-              try {
-                  // Completely disable WebDriverManager and Selenium Manager
-                  System.setProperty("webdriver.http.factory", "jdk-http-client");
-                  System.setProperty("webdriver.manager.enabled", "false");
-                  
-                  // Set the Edge binary path explicitly
-                  EdgeOptions edgeOptions = new EdgeOptions();
-                  edgeOptions.setBinary("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
-                  
-                  // Try to create EdgeDriver directly with options
-                  driver = new EdgeDriver(edgeOptions);
-              } catch (Exception e) {
-                  System.out.println("⚠️ Edge WebDriver setup failed: " + e.getMessage());
-                  throw e;
-              }
-              break;
-          case "safari":
-              WebDriverManager.safaridriver().setup();
-              driver = new SafariDriver();
-              // Maximize Safari window
-              driver.manage().window().maximize();
-              break;
-          case "chrome":
-          default:
-              WebDriverManager.chromedriver().setup();
-              ChromeOptions chromeOpts = new ChromeOptions();
-              chromeOpts.addArguments("--start-maximized");
-              chromeOpts.addArguments("--remote-allow-origins=*");
-              chromeOpts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
-              chromeOpts.setExperimentalOption("useAutomationExtension", false);
-              driver = new ChromeDriver(chromeOpts);
-              // Ensure window is maximized
-              driver.manage().window().maximize();
-              break;
-      }
-      wait = new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_TIMEOUT));
-      js = (JavascriptExecutor) driver;
-      actions = new Actions(driver);
-      // ⭐ FIX: Ensure edit button visible
-      js.executeScript("document.body.style.zoom='80%';");
-      pause(600);
-  }
+        switch(browserType.toLowerCase()) {
+            case "firefox":
+                WebDriverManager.firefoxdriver().setup();
+                driver = new FirefoxDriver();
+                break;
+            case "edge":
+                try {
+                    // Set the Edge binary path explicitly
+                    EdgeOptions edgeOptions = new EdgeOptions();
+                    edgeOptions.setBinary("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
+                    
+                    // Try to create EdgeDriver directly with options
+                    driver = new EdgeDriver(edgeOptions);
+                } catch (Exception e) {
+                    System.out.println("⚠️ Edge WebDriver setup failed: " + e.getMessage());
+                    throw e;
+                }
+                break;
+            case "safari":
+                WebDriverManager.safaridriver().setup();
+                driver = new SafariDriver();
+                // Maximize Safari window
+                driver.manage().window().maximize();
+                break;
+            case "chrome":
+            default:
+                // Let WebDriverManager automatically detect the correct ChromeDriver version
+                // Clear cache first to ensure fresh download
+                WebDriverManager.chromedriver().clearDriverCache();
+                WebDriverManager.chromedriver().setup();
+                ChromeOptions chromeOpts = new ChromeOptions();
+                chromeOpts.addArguments("--start-maximized");
+                chromeOpts.addArguments("--remote-allow-origins=*");
+                chromeOpts.addArguments("--disable-blink-features=AutomationControlled");
+                chromeOpts.addArguments("--no-sandbox");
+                chromeOpts.addArguments("--disable-dev-shm-usage");
+                chromeOpts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+                chromeOpts.setExperimentalOption("useAutomationExtension", false);
+                driver = new ChromeDriver(chromeOpts);
+                // Ensure window is maximized
+                driver.manage().window().maximize();
+                break;
+        }
+        wait = new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_TIMEOUT));
+        js = (JavascriptExecutor) driver;
+        actions = new Actions(driver);
+        // ⭐ FIX: Ensure edit button visible
+        js.executeScript("document.body.style.zoom='80%';");
+        pause(600);
+    }
+
   static void pause(long ms) { try { Thread.sleep(ms); } catch (InterruptedException ignored) {} }
   static String stamp() { return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")); }
   

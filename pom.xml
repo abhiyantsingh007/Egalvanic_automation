@@ -30,6 +30,13 @@
             <version>5.6.3</version>
         </dependency>
 
+        <!-- Apache HTTP Client for Selenium -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+
         <!-- Extent Reports for HTML reporting -->
         <dependency>
             <groupId>com.aventstack</groupId>

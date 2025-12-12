@@ -200,13 +200,12 @@ public class job1 {
               break;
           case "edge":
               try {
-                  // Completely disable WebDriverManager and Selenium Manager
-                  System.setProperty("webdriver.http.factory", "jdk-http-client");
-                  System.setProperty("webdriver.manager.enabled", "false");
-                  
                   // Set the Edge binary path explicitly
                   EdgeOptions edgeOptions = new EdgeOptions();
                   edgeOptions.setBinary("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
+                  
+                  // Setup WebDriverManager for Edge
+                  WebDriverManager.edgedriver().setup();
                   
                   // Try to create EdgeDriver directly with options
                   driver = new EdgeDriver(edgeOptions);
@@ -223,10 +222,16 @@ public class job1 {
               break;
           case "chrome":
           default:
+              // Let WebDriverManager automatically detect the correct ChromeDriver version
+              // Clear cache first to ensure fresh download
+              WebDriverManager.chromedriver().clearDriverCache();
               WebDriverManager.chromedriver().setup();
               ChromeOptions chromeOpts = new ChromeOptions();
               chromeOpts.addArguments("--start-maximized");
               chromeOpts.addArguments("--remote-allow-origins=*");
+              chromeOpts.addArguments("--disable-blink-features=AutomationControlled");
+              chromeOpts.addArguments("--no-sandbox");
+              chromeOpts.addArguments("--disable-dev-shm-usage");
               chromeOpts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
               chromeOpts.setExperimentalOption("useAutomationExtension", false);
               driver = new ChromeDriver(chromeOpts);
