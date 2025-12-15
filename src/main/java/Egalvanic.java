@@ -42,7 +42,10 @@ public class Egalvanic {
   static JavascriptExecutor js;
   static Actions actions;
   static ExtentReports extent;
-  static ExtentTest test;
+  static ExtentTest moduleTest; // Module level test
+  static ExtentTest featureTest; // Feature level test
+  static ExtentTest crudSubFeatureTest; // CRUD Sub-feature test
+  static ExtentTest searchSubFeatureTest; // Search Sub-feature test
   static ExtentTest crossBrowserTest;
   static ExtentSparkReporter sparkReporter;
   static Map<String, ExtentReports> browserReports = new HashMap<>();
@@ -80,6 +83,23 @@ public class Egalvanic {
       setupExtentReports();
       setupDriver(currentBrowser);
       try {
+          // Create the hierarchical test structure for reporting
+          // Module = Assets
+          moduleTest = extent.createTest("Module: Assets");
+          moduleTest.assignCategory("Assets");
+          
+          // Feature = List
+          featureTest = moduleTest.createNode("Feature: List");
+          featureTest.assignCategory("List");
+          
+          // Sub-Feature = CRUD Assets
+          crudSubFeatureTest = featureTest.createNode("Sub-Feature: CRUD Assets");
+          crudSubFeatureTest.assignCategory("CRUD");
+          
+          // Sub-Feature = Search
+          searchSubFeatureTest = featureTest.createNode("Sub-Feature: Search");
+          searchSubFeatureTest.assignCategory("Search");
+          
           // Create a specific test for cross-browser testing
           crossBrowserTest = extent.createTest("Cross-Browser Testing - " + currentBrowser.toUpperCase());
           crossBrowserTest.assignCategory("Cross-Browser Testing");
@@ -88,11 +108,12 @@ public class Egalvanic {
           // Add browser-specific information to the report
           crossBrowserTest.log(Status.INFO, "Browser Version: " + getCurrentBrowserVersion());
           crossBrowserTest.log(Status.INFO, "Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-          test = extent.createTest("UI Testing - Dashboard, Create Asset and Edit Asset Flow");
-          test.log(Status.INFO, "Starting UI testing for dashboard, create asset and edit asset flow");
+          
+          // Log initial information in the CRUD sub-feature
+          crudSubFeatureTest.log(Status.INFO, "Starting UI testing for dashboard, create asset and edit asset flow");
          
           // UI Testing
-          test.log(Status.INFO, "Starting UI testing");
+          crudSubFeatureTest.log(Status.INFO, "Starting UI testing");
           takeShotAndAttachReport("ui_before_login", "Before Login");
           crossBrowserTest.log(Status.INFO, "Before Login - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Login - " + currentBrowser.toUpperCase());
@@ -134,11 +155,15 @@ public class Egalvanic {
           takeShotAndAttachReport("after_phase2_edit", "After Phase 2 Edit");
           crossBrowserTest.log(Status.PASS, "✅ Asset Edit Phase 2 Successful - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "After Phase 2 Edit - " + currentBrowser.toUpperCase());
-         
-          test.log(Status.PASS, "✅ UI testing completed successfully");
+
+          deleteAsset();
+          takeShotAndAttachReport("ui_before_delete_asset", "Before Delete Asset");
+          crossBrowserTest.log(Status.INFO, "Before Delete Asset - " + currentBrowser.toUpperCase());
+          crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Delete Asset - " + currentBrowser.toUpperCase());
+
           crossBrowserTest.log(Status.PASS, "✅ UI testing completed successfully on " + currentBrowser.toUpperCase());
          
-          test.log(Status.PASS, "🎉 Full UI flow completed successfully");
+          crudSubFeatureTest.log(Status.PASS, "🎉 Full UI flow completed successfully");
           crossBrowserTest.log(Status.PASS, "🎉 Full UI flow completed successfully on " + currentBrowser.toUpperCase());
          
           // API Testing
@@ -154,7 +179,7 @@ public class Egalvanic {
           
       } catch (Exception e) {
           System.out.println("❌ Fatal error: " + e.getMessage());
-          test.log(Status.FAIL, "Fatal error: " + e.getMessage());
+          crudSubFeatureTest.log(Status.FAIL, "Fatal error: " + e.getMessage());
           crossBrowserTest.log(Status.FAIL, "Fatal error on " + currentBrowser.toUpperCase() + ": " + e.getMessage());
           try { 
               takeShotAndAttachReport("fatal_error", "Fatal Error - " + currentBrowser.toUpperCase()); 
@@ -282,19 +307,25 @@ public class Egalvanic {
           String destPath = "test-output/screenshots/" + fname;
           Files.copy(src.toPath(), Path.of(destPath));
           System.out.println("✔ Screenshot saved: " + fname);
-         
+       
           // Create Base64 encoded version for embedding in report
           byte[] fileContent = Files.readAllBytes(Path.of(destPath));
           String base64Image = java.util.Base64.getEncoder().encodeToString(fileContent);
-         
+       
           // Attach to Extent Report (only embedded version for sharing compatibility)
-          if (test != null) {
-              test.addScreenCaptureFromBase64String(base64Image, testName);
+          // Use crudSubFeatureTest as default if no specific test is provided
+          if (crudSubFeatureTest != null) {
+              crudSubFeatureTest.addScreenCaptureFromBase64String(base64Image, testName);
+          } else if (crossBrowserTest != null) {
+              crossBrowserTest.addScreenCaptureFromBase64String(base64Image, testName);
           }
       } catch (Exception e) {
           System.out.println("⚠️ Screenshot failed: " + e.getMessage());
-          if (test != null) {
-              test.log(Status.WARNING, "Screenshot failed: " + e.getMessage());
+          // Log to the appropriate test node
+          if (crudSubFeatureTest != null) {
+              crudSubFeatureTest.log(Status.WARNING, "Screenshot failed: " + e.getMessage());
+          } else if (crossBrowserTest != null) {
+              crossBrowserTest.log(Status.WARNING, "Screenshot failed: " + e.getMessage());
           }
       }
   }
@@ -387,21 +418,21 @@ public class Egalvanic {
   }
   // ---------------- login ----------------
   static void login() {
-      test.log(Status.INFO, "Starting login process");
-      test.log(Status.INFO, "Navigating to login page: " + BASE_URL);
+      crudSubFeatureTest.log(Status.INFO, "Starting login process");
+      crudSubFeatureTest.log(Status.INFO, "Navigating to login page: " + BASE_URL);
       long startTime = System.currentTimeMillis();
       driver.get(BASE_URL);
      
-      test.log(Status.INFO, "Entering email: " + EMAIL);
+      crudSubFeatureTest.log(Status.INFO, "Entering email: " + EMAIL);
       type(By.id("email"), EMAIL);
      
-      test.log(Status.INFO, "Entering password: " + PASSWORD);
+      crudSubFeatureTest.log(Status.INFO, "Entering password: " + PASSWORD);
       type(By.id("password"), PASSWORD);
      
-      test.log(Status.INFO, "Clicking login button");
+      crudSubFeatureTest.log(Status.INFO, "Clicking login button");
       click(By.xpath("//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]"));
      
-      test.log(Status.INFO, "Waiting for login to complete");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for login to complete");
       wait.until(ExpectedConditions.or(
               ExpectedConditions.presenceOfElementLocated(By.cssSelector("nav")),
               ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Dashboard') or contains(text(),'Sites')]"))
@@ -410,21 +441,20 @@ public class Egalvanic {
       long endTime = System.currentTimeMillis();
       long loadTime = endTime - startTime;
       System.out.println("✔ Login successful");
-      test.log(Status.PASS, "✅ Login successful in " + loadTime + " ms");
+      crudSubFeatureTest.log(Status.PASS, "✅ Login successful in " + loadTime + " ms");
      
       // Get auth token for API testing
-      test.log(Status.INFO, "Getting authentication token for API testing");
+      crudSubFeatureTest.log(Status.INFO, "Getting authentication token for API testing");
       getAuthToken();
   }
- 
   // ---------------- API Authentication ----------------
   static void getAuthToken() {
       try {
-          test.log(Status.INFO, "Starting Authentication Flow (Alliance Config + Tenant Login)");
+          crudSubFeatureTest.log(Status.INFO, "Starting Authentication Flow (Alliance Config + Tenant Login)");
           takeShotAndAttachReport("api_before_auth", "Before API Authentication");
 
           // STEP 1: HIT ALLIANCE CONFIG (NO SUBDOMAIN HEADER)
-          test.log(Status.INFO, "Calling alliance-config API to fetch tenant base URL");
+          crudSubFeatureTest.log(Status.INFO, "Calling alliance-config API to fetch tenant base URL");
 
           RestAssured.baseURI = "https://eg-pz.egalvanic.ai/api";
 
@@ -432,11 +462,11 @@ public class Egalvanic {
                   .get("/company/alliance-config/acme.egalvanic")
                   .then().extract().response();
 
-          test.log(Status.INFO, "Alliance-config status: " + configResponse.getStatusCode());
-          test.log(Status.INFO, "Alliance-config response: " + configResponse.getBody().asString());
+          crudSubFeatureTest.log(Status.INFO, "Alliance-config status: " + configResponse.getStatusCode());
+          crudSubFeatureTest.log(Status.INFO, "Alliance-config response: " + configResponse.getBody().asString());
 
           if (configResponse.getStatusCode() != 200) {
-              test.log(Status.FAIL, "❌ Failed to load alliance-config.");
+              crudSubFeatureTest.log(Status.FAIL, "❌ Failed to load alliance-config.");
               takeShotAndAttachReport("api_alliance_config_fail", "Alliance Config Failed");
               return;
           }
@@ -445,14 +475,14 @@ public class Egalvanic {
           tenantBaseUrl = configResponse.jsonPath().getString("alliance_partner.invoke_url");
 
           if (tenantBaseUrl == null || tenantBaseUrl.isEmpty()) {
-              test.log(Status.FAIL, "❌ baseApiUrl missing in alliance-config response");
+              crudSubFeatureTest.log(Status.FAIL, "❌ baseApiUrl missing in alliance-config response");
               return;
           }
 
-          test.log(Status.PASS, "Tenant API Base URL found: " + tenantBaseUrl);
+          crudSubFeatureTest.log(Status.PASS, "Tenant API Base URL found: " + tenantBaseUrl);
 
           // STEP 2: LOGIN WITH SUBDOMAIN ON TENANT DOMAIN
-          test.log(Status.INFO, "Proceeding to tenant login using: " + tenantBaseUrl);
+          crudSubFeatureTest.log(Status.INFO, "Proceeding to tenant login using: " + tenantBaseUrl);
 
           RestAssured.baseURI = tenantBaseUrl;
 
@@ -460,7 +490,7 @@ public class Egalvanic {
           loginPayload.put("email", EMAIL);
           loginPayload.put("password", PASSWORD);
 
-          test.log(Status.INFO, "Login request payload: " + loginPayload.toString());
+          crudSubFeatureTest.log(Status.INFO, "Login request payload: " + loginPayload.toString());
 
           Response response = RestAssured.given()
                   .contentType("application/json")
@@ -469,59 +499,60 @@ public class Egalvanic {
                   .post("/auth/login")
                   .then().extract().response();
 
-          test.log(Status.INFO, "Login response status code: " + response.getStatusCode());
-          test.log(Status.INFO, "Login response body: " + response.getBody().asString());
+          crudSubFeatureTest.log(Status.INFO, "Login response status code: " + response.getStatusCode());
+          crudSubFeatureTest.log(Status.INFO, "Login response body: " + response.getBody().asString());
 
           if (response.getStatusCode() == 200) {
               authToken = response.jsonPath().getString("access_token");
 
               if (authToken == null || authToken.isEmpty()) {
-                  test.log(Status.FAIL, "❌ Token is missing in login response");
+                  crudSubFeatureTest.log(Status.FAIL, "❌ Token is missing in login response");
               } else {
-                  test.log(Status.PASS, "✅ Authentication token obtained successfully");
-                  test.log(Status.INFO, "Token (first 10 chars): " + authToken.substring(0, 10) + "...");
+                  crudSubFeatureTest.log(Status.PASS, "✅ Authentication token obtained successfully");
+                  crudSubFeatureTest.log(Status.INFO, "Token (first 10 chars): " + authToken.substring(0, 10) + "...");
               }
 
               // Extract user ID
               try {
                   userId = response.jsonPath().getString("user.id");
-                  test.log(Status.INFO, "User ID extracted: " + userId);
+                  crudSubFeatureTest.log(Status.INFO, "User ID extracted: " + userId);
               } catch (Exception e) {
-                  test.log(Status.INFO, "User ID not present in login response");
+                  crudSubFeatureTest.log(Status.INFO, "User ID not present in login response");
               }
 
           } else {
-              test.log(Status.FAIL, "❌ Failed to obtain authentication token");
-              test.log(Status.INFO, "Failure response body: " + response.getBody().asString());
+              crudSubFeatureTest.log(Status.FAIL, "❌ Failed to obtain authentication token");
+              crudSubFeatureTest.log(Status.INFO, "Failure response body: " + response.getBody().asString());
               takeShotAndAttachReport("api_auth_fail_response", "Auth Failed Response");
           }
 
           takeShotAndAttachReport("api_after_auth", "After API Authentication");
 
       } catch (Exception e) {
-          test.log(Status.FAIL, "❌ Exception during getAuthToken(): " + e.getMessage());
+          crudSubFeatureTest.log(Status.FAIL, "❌ Exception during getAuthToken(): " + e.getMessage());
           takeShotAndAttachReport("api_auth_exception", "API Auth Exception");
       }
-  }  // ---------------- API Testing ----------------
+  }
+  // ---------------- API Testing ----------------
   static void performAPITesting() {
-      test = extent.createTest("API Testing");
-      test.log(Status.INFO, "Starting API testing");
+      ExtentTest apiTest = extent.createTest("API Testing");
+      apiTest.log(Status.INFO, "Starting API testing");
       crossBrowserTest.log(Status.INFO, "Starting API testing on " + currentBrowser.toUpperCase());
      
       try {
           if (authToken == null) {
-              test.log(Status.FAIL, "❌ No auth token available for API testing");
+              apiTest.log(Status.FAIL, "❌ No auth token available for API testing");
               takeShotAndAttachReport("api_no_token", "API Testing - No Auth Token");
               return;
           }
          
-          test.log(Status.INFO, "Using auth token for API testing");
+          apiTest.log(Status.INFO, "Using auth token for API testing");
           takeShotAndAttachReport("api_before_tests", "Before API Tests");
           crossBrowserTest.log(Status.INFO, "Before API Tests - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before API Tests - " + currentBrowser.toUpperCase());
          
           // Test GET auth/me endpoint to validate token
-          test.log(Status.INFO, "Testing GET /auth/me endpoint");
+          apiTest.log(Status.INFO, "Testing GET /auth/me endpoint");
           takeShotAndAttachReport("api_before_auth_me", "Before Auth Me Test");
           crossBrowserTest.log(Status.INFO, "Before Auth Me Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Auth Me Test - " + currentBrowser.toUpperCase());
@@ -539,40 +570,40 @@ public class Egalvanic {
           long endTime = System.currentTimeMillis();
           long responseTime = endTime - startTime;
          
-          test.log(Status.INFO, "GET /auth/me response time: " + responseTime + " ms");
-          test.log(Status.INFO, "GET /auth/me status code: " + response.getStatusCode());
-          test.log(Status.INFO, "GET /auth/me response headers: " + response.getHeaders().toString());
+          apiTest.log(Status.INFO, "GET /auth/me response time: " + responseTime + " ms");
+          apiTest.log(Status.INFO, "GET /auth/me status code: " + response.getStatusCode());
+          apiTest.log(Status.INFO, "GET /auth/me response headers: " + response.getHeaders().toString());
          
           if (response.getStatusCode() == 200) {
-              test.log(Status.PASS, "✅ GET /auth/me endpoint test passed");
+              apiTest.log(Status.PASS, "✅ GET /auth/me endpoint test passed");
              
               // Extract user information from response
               try {
                   String userEmail = response.jsonPath().getString("email");
                   String userId = response.jsonPath().getString("id");
-                  test.log(Status.INFO, "User authenticated: " + userEmail + " (ID: " + userId + ")");
+                  apiTest.log(Status.INFO, "User authenticated: " + userEmail + " (ID: " + userId + ")");
                  
                   // Additional user info
                   try {
                       String userName = response.jsonPath().getString("name");
-                      test.log(Status.INFO, "User name: " + userName);
+                      apiTest.log(Status.INFO, "User name: " + userName);
                   } catch (Exception e) {
-                      test.log(Status.INFO, "User name not available in response");
+                      apiTest.log(Status.INFO, "User name not available in response");
                   }
               } catch (Exception e) {
-                  test.log(Status.WARNING, "⚠️ User information not available in response: " + e.getMessage());
+                  apiTest.log(Status.WARNING, "⚠️ User information not available in response: " + e.getMessage());
               }
              
               // Log response body snippet
               String responseBody = response.asString();
               if (responseBody.length() > 200) {
-                  test.log(Status.INFO, "Response body (first 200 chars): " + responseBody.substring(0, 200) + "...");
+                  apiTest.log(Status.INFO, "Response body (first 200 chars): " + responseBody.substring(0, 200) + "...");
               } else {
-                  test.log(Status.INFO, "Response body: " + responseBody);
+                  apiTest.log(Status.INFO, "Response body: " + responseBody);
               }
           } else {
-              test.log(Status.FAIL, "❌ GET /auth/me endpoint test failed with status code: " + response.getStatusCode());
-              test.log(Status.INFO, "Response body: " + response.getBody().asString());
+              apiTest.log(Status.FAIL, "❌ GET /auth/me endpoint test failed with status code: " + response.getStatusCode());
+              apiTest.log(Status.INFO, "Response body: " + response.getBody().asString());
           }
          
           // Capture screenshot for API testing
@@ -581,7 +612,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "API Auth Me Test - " + currentBrowser.toUpperCase());
          
           // Test GET users endpoint
-          test.log(Status.INFO, "Testing GET /users endpoint");
+          apiTest.log(Status.INFO, "Testing GET /users endpoint");
           takeShotAndAttachReport("api_before_users", "Before Users Endpoint Test");
           crossBrowserTest.log(Status.INFO, "Before Users Endpoint Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Users Endpoint Test - " + currentBrowser.toUpperCase());
@@ -599,50 +630,50 @@ public class Egalvanic {
           endTime = System.currentTimeMillis();
           responseTime = endTime - startTime;
          
-          test.log(Status.INFO, "GET /users response time: " + responseTime + " ms");
-          test.log(Status.INFO, "GET /users status code: " + response.getStatusCode());
+          apiTest.log(Status.INFO, "GET /users response time: " + responseTime + " ms");
+          apiTest.log(Status.INFO, "GET /users status code: " + response.getStatusCode());
          
           if (response.getStatusCode() == 200) {
-              test.log(Status.PASS, "✅ GET /users endpoint test passed");
+              apiTest.log(Status.PASS, "✅ GET /users endpoint test passed");
              
               // Test API response size
               String responseBody = response.asString();
               int responseSize = responseBody.length();
-              test.log(Status.INFO, "API response size: " + responseSize + " characters");
+              apiTest.log(Status.INFO, "API response size: " + responseSize + " characters");
              
               if (responseSize < 1000000) { // Less than 1MB
-                  test.log(Status.PASS, "✅ API response size is acceptable");
+                  apiTest.log(Status.PASS, "✅ API response size is acceptable");
               } else {
-                  test.log(Status.WARNING, "⚠️ API response size is larger than expected");
+                  apiTest.log(Status.WARNING, "⚠️ API response size is larger than expected");
               }
              
               // Parse response to check structure
               try {
                   int userCount = response.jsonPath().getList("$").size();
-                  test.log(Status.INFO, "Number of users returned: " + userCount);
+                  apiTest.log(Status.INFO, "Number of users returned: " + userCount);
                  
                   // Show first user as example
                   if (userCount > 0) {
                       try {
                           String firstUserEmail = response.jsonPath().getString("[0].email");
-                          test.log(Status.INFO, "First user email: " + firstUserEmail);
+                          apiTest.log(Status.INFO, "First user email: " + firstUserEmail);
                       } catch (Exception e) {
-                          test.log(Status.INFO, "Could not extract first user email");
+                          apiTest.log(Status.INFO, "Could not extract first user email");
                       }
                   }
               } catch (Exception e) {
-                  test.log(Status.WARNING, "⚠️ Could not parse user count from response: " + e.getMessage());
+                  apiTest.log(Status.WARNING, "⚠️ Could not parse user count from response: " + e.getMessage());
               }
              
               // Log response body snippet
               if (responseBody.length() > 200) {
-                  test.log(Status.INFO, "Response body (first 200 chars): " + responseBody.substring(0, 200) + "...");
+                  apiTest.log(Status.INFO, "Response body (first 200 chars): " + responseBody.substring(0, 200) + "...");
               } else {
-                  test.log(Status.INFO, "Response body: " + responseBody);
+                  apiTest.log(Status.INFO, "Response body: " + responseBody);
               }
           } else {
-              test.log(Status.FAIL, "❌ GET /users endpoint test failed with status code: " + response.getStatusCode());
-              test.log(Status.INFO, "Response body: " + response.getBody().asString());
+              apiTest.log(Status.FAIL, "❌ GET /users endpoint test failed with status code: " + response.getStatusCode());
+              apiTest.log(Status.INFO, "Response body: " + response.getBody().asString());
           }
          
           // Capture screenshot for API testing
@@ -651,7 +682,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "API Users Endpoint Test - " + currentBrowser.toUpperCase());
          
           // Test POST create user endpoint (example)
-          test.log(Status.INFO, "Testing POST /users endpoint (example)");
+          apiTest.log(Status.INFO, "Testing POST /users endpoint (example)");
           takeShotAndAttachReport("api_before_create_user", "Before Create User Test");
           crossBrowserTest.log(Status.INFO, "Before Create User Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Create User Test - " + currentBrowser.toUpperCase());
@@ -669,15 +700,15 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "POST /users status code: " + response.getStatusCode());
-          test.log(Status.INFO, "POST /users request payload: " + newUserPayload.toString());
+          apiTest.log(Status.INFO, "POST /users status code: " + response.getStatusCode());
+          apiTest.log(Status.INFO, "POST /users request payload: " + newUserPayload.toString());
          
           if (response.getStatusCode() == 201 || response.getStatusCode() == 200) {
-              test.log(Status.PASS, "✅ POST /users endpoint test passed");
+              apiTest.log(Status.PASS, "✅ POST /users endpoint test passed");
           } else if (response.getStatusCode() == 403 || response.getStatusCode() == 401 || response.getStatusCode() == 400) {
-              test.log(Status.PASS, "✅ POST /users correctly rejected (as expected): " + response.getStatusCode());
+              apiTest.log(Status.PASS, "✅ POST /users correctly rejected (as expected): " + response.getStatusCode());
           } else {
-              test.log(Status.WARNING, "⚠️ POST /users returned unexpected status: " + response.getStatusCode());
+              apiTest.log(Status.WARNING, "⚠️ POST /users returned unexpected status: " + response.getStatusCode());
           }
          
           // Capture screenshot for API testing
@@ -685,12 +716,12 @@ public class Egalvanic {
           crossBrowserTest.log(Status.PASS, "✅ Create User Test Completed - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "API Create User Test - " + currentBrowser.toUpperCase());
          
-          test.log(Status.PASS, "✅ API testing completed with detailed results");
+          apiTest.log(Status.PASS, "✅ API testing completed with detailed results");
           crossBrowserTest.log(Status.PASS, "✅ API testing completed with detailed results on " + currentBrowser.toUpperCase());
           takeShotAndAttachReport("api_tests_complete", "API Tests Complete");
          
       } catch (Exception e) {
-          test.log(Status.FAIL, "❌ API testing failed with exception: " + e.getMessage());
+          apiTest.log(Status.FAIL, "❌ API testing failed with exception: " + e.getMessage());
           e.printStackTrace();
           // Capture screenshot for API testing failure
           takeShotAndAttachReport("api_test_failure", "API Test Failure");
@@ -699,13 +730,13 @@ public class Egalvanic {
  
   // ---------------- Performance Testing ----------------
   static void performPerformanceTesting() {
-      test = extent.createTest("Performance Testing");
-      test.log(Status.INFO, "Starting performance testing");
+      ExtentTest perfTest = extent.createTest("Performance Testing");
+      perfTest.log(Status.INFO, "Starting performance testing");
       crossBrowserTest.log(Status.INFO, "Starting performance testing on " + currentBrowser.toUpperCase());
      
       try {
           // UI Performance Test - Page Load Time
-          test.log(Status.INFO, "Testing UI page load performance");
+          perfTest.log(Status.INFO, "Testing UI page load performance");
           takeShotAndAttachReport("perf_before_ui_load", "Before UI Load Test");
           crossBrowserTest.log(Status.INFO, "Before UI Load Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before UI Load Test - " + currentBrowser.toUpperCase());
@@ -715,15 +746,15 @@ public class Egalvanic {
           long endTime = System.currentTimeMillis();
           long loadTime = endTime - startTime;
          
-          test.log(Status.INFO, "Login page load time: " + loadTime + " ms");
+          perfTest.log(Status.INFO, "Login page load time: " + loadTime + " ms");
          
           // Performance assessment
           if (loadTime < 2000) { // Less than 2 seconds
-              test.log(Status.PASS, "✅ Excellent page load time (< 2 seconds)");
+              perfTest.log(Status.PASS, "✅ Excellent page load time (< 2 seconds)");
           } else if (loadTime < 5000) { // Less than 5 seconds
-              test.log(Status.PASS, "✅ Good page load time (< 5 seconds)");
+              perfTest.log(Status.PASS, "✅ Good page load time (< 5 seconds)");
           } else {
-              test.log(Status.WARNING, "⚠️ Page load time is slower than expected (> 5 seconds)");
+              perfTest.log(Status.WARNING, "⚠️ Page load time is slower than expected (> 5 seconds)");
           }
          
           // Capture screenshot for UI performance test
@@ -732,7 +763,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "UI Performance Test - " + currentBrowser.toUpperCase());
          
           // Test multiple page loads for consistency
-          test.log(Status.INFO, "Testing UI page load consistency");
+          perfTest.log(Status.INFO, "Testing UI page load consistency");
           takeShotAndAttachReport("perf_before_consistency", "Before Consistency Test");
           crossBrowserTest.log(Status.INFO, "Before Consistency Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Consistency Test - " + currentBrowser.toUpperCase());
@@ -746,12 +777,12 @@ public class Egalvanic {
               endTime = System.currentTimeMillis();
               loadTimes[i] = endTime - startTime;
               totalLoadTime += loadTimes[i];
-              test.log(Status.INFO, "Load test " + (i+1) + " time: " + loadTimes[i] + " ms");
+              perfTest.log(Status.INFO, "Load test " + (i+1) + " time: " + loadTimes[i] + " ms");
               pause(1000); // Wait 1 second between tests
           }
          
           long averageLoadTime = totalLoadTime / 3;
-          test.log(Status.INFO, "Average load time over 3 tests: " + averageLoadTime + " ms");
+          perfTest.log(Status.INFO, "Average load time over 3 tests: " + averageLoadTime + " ms");
          
           // Check for consistency
           long minTime = Math.min(Math.min(loadTimes[0], loadTimes[1]), loadTimes[2]);
@@ -759,9 +790,9 @@ public class Egalvanic {
           long difference = maxTime - minTime;
          
           if (difference < 1000) { // Less than 1 second difference
-              test.log(Status.PASS, "✅ Page load times are consistent (difference < 1 second)");
+              perfTest.log(Status.PASS, "✅ Page load times are consistent (difference < 1 second)");
           } else {
-              test.log(Status.WARNING, "⚠️ Page load times show inconsistency (difference > 1 second)");
+              perfTest.log(Status.WARNING, "⚠️ Page load times show inconsistency (difference > 1 second)");
           }
          
           takeShotAndAttachReport("perf_consistency", "UI Consistency Test");
@@ -769,7 +800,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "UI Consistency Test - " + currentBrowser.toUpperCase());
          
           // Concurrent Requests Performance Test
-          test.log(Status.INFO, "Testing concurrent API requests performance");
+          perfTest.log(Status.INFO, "Testing concurrent API requests performance");
           takeShotAndAttachReport("perf_before_concurrent", "Before Concurrent Requests Test");
           crossBrowserTest.log(Status.INFO, "Before Concurrent Requests Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Concurrent Requests Test - " + currentBrowser.toUpperCase());
@@ -780,7 +811,7 @@ public class Egalvanic {
               long[] responseTimes = new long[requestCount];
               int successCount = 0;
              
-              test.log(Status.INFO, "Sending " + requestCount + " concurrent requests");
+              perfTest.log(Status.INFO, "Sending " + requestCount + " concurrent requests");
              
               for (int i = 0; i < requestCount; i++) {
                   long reqStartTime = System.currentTimeMillis();
@@ -800,33 +831,33 @@ public class Egalvanic {
                  
                   if (response.getStatusCode() == 200) {
                       successCount++;
-                      test.log(Status.INFO, "Concurrent request " + (i+1) + " successful in " + reqResponseTime + " ms");
+                      perfTest.log(Status.INFO, "Concurrent request " + (i+1) + " successful in " + reqResponseTime + " ms");
                   } else {
-                      test.log(Status.WARNING, "Concurrent request " + (i+1) + " failed with status code: " + response.getStatusCode() + " in " + reqResponseTime + " ms");
+                      perfTest.log(Status.WARNING, "Concurrent request " + (i+1) + " failed with status code: " + response.getStatusCode() + " in " + reqResponseTime + " ms");
                   }
               }
              
               long averageResponseTime = totalResponseTime / requestCount;
-              test.log(Status.INFO, "Average response time for " + requestCount + " concurrent requests: " + averageResponseTime + " ms");
-              test.log(Status.INFO, "Successful requests: " + successCount + "/" + requestCount);
+              perfTest.log(Status.INFO, "Average response time for " + requestCount + " concurrent requests: " + averageResponseTime + " ms");
+              perfTest.log(Status.INFO, "Successful requests: " + successCount + "/" + requestCount);
              
               // Performance assessment
               if (averageResponseTime < 1000) { // Less than 1 second
-                  test.log(Status.PASS, "✅ Excellent concurrent requests performance (< 1 second)");
+                  perfTest.log(Status.PASS, "✅ Excellent concurrent requests performance (< 1 second)");
               } else if (averageResponseTime < 3000) { // Less than 3 seconds
-                  test.log(Status.PASS, "✅ Good concurrent requests performance (< 3 seconds)");
+                  perfTest.log(Status.PASS, "✅ Good concurrent requests performance (< 3 seconds)");
               } else {
-                  test.log(Status.WARNING, "⚠️ Concurrent requests performance is slower than expected (> 3 seconds)");
+                  perfTest.log(Status.WARNING, "⚠️ Concurrent requests performance is slower than expected (> 3 seconds)");
               }
              
               // Success rate assessment
               double successRate = (double) successCount / requestCount * 100;
               if (successRate == 100) {
-                  test.log(Status.PASS, "✅ All concurrent requests successful (100% success rate)");
+                  perfTest.log(Status.PASS, "✅ All concurrent requests successful (100% success rate)");
               } else if (successRate >= 80) {
-                  test.log(Status.PASS, "✅ Good success rate for concurrent requests (" + successRate + "%)");
+                  perfTest.log(Status.PASS, "✅ Good success rate for concurrent requests (" + successRate + "%)");
               } else {
-                  test.log(Status.FAIL, "❌ Poor success rate for concurrent requests (" + successRate + "%)");
+                  perfTest.log(Status.FAIL, "❌ Poor success rate for concurrent requests (" + successRate + "%)");
               }
              
               // Capture screenshot for concurrent requests test
@@ -835,13 +866,13 @@ public class Egalvanic {
               crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Concurrent Requests Performance - " + currentBrowser.toUpperCase());
              
           } else {
-              test.log(Status.FAIL, "❌ Skipping concurrent requests test - no auth token available");
+              perfTest.log(Status.FAIL, "❌ Skipping concurrent requests test - no auth token available");
               // Capture screenshot for skipped test
               takeShotAndAttachReport("perf_skipped_test", "Performance Test Skipped");
           }
          
           // API Response Size Performance Test
-          test.log(Status.INFO, "Testing API response size performance");
+          perfTest.log(Status.INFO, "Testing API response size performance");
           takeShotAndAttachReport("perf_before_response_size", "Before Response Size Test");
           crossBrowserTest.log(Status.INFO, "Before Response Size Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Response Size Test - " + currentBrowser.toUpperCase());
@@ -858,33 +889,33 @@ public class Egalvanic {
               if (response.getStatusCode() == 200) {
                   String responseBody = response.asString();
                   int responseSize = responseBody.length();
-                  test.log(Status.INFO, "API response size: " + responseSize + " characters");
+                  perfTest.log(Status.INFO, "API response size: " + responseSize + " characters");
                  
                   // Performance assessment based on response size
                   if (responseSize < 50000) { // Less than 50KB
-                      test.log(Status.PASS, "✅ Excellent API response size (< 50KB)");
+                      perfTest.log(Status.PASS, "✅ Excellent API response size (< 50KB)");
                   } else if (responseSize < 100000) { // Less than 100KB
-                      test.log(Status.PASS, "✅ Good API response size (< 100KB)");
+                      perfTest.log(Status.PASS, "✅ Good API response size (< 100KB)");
                   } else {
-                      test.log(Status.WARNING, "⚠️ Large API response size (> 100KB)");
+                      perfTest.log(Status.WARNING, "⚠️ Large API response size (> 100KB)");
                   }
               } else {
-                  test.log(Status.WARNING, "⚠️ Could not get response size - API request failed with status: " + response.getStatusCode());
+                  perfTest.log(Status.WARNING, "⚠️ Could not get response size - API request failed with status: " + response.getStatusCode());
               }
              
               takeShotAndAttachReport("perf_response_size", "API Response Size Test");
               crossBrowserTest.log(Status.PASS, "✅ API Response Size Test Completed - " + currentBrowser.toUpperCase());
               crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "API Response Size Test - " + currentBrowser.toUpperCase());
           } else {
-              test.log(Status.WARNING, "⚠️ Skipping response size test - no auth token available");
+              perfTest.log(Status.WARNING, "⚠️ Skipping response size test - no auth token available");
           }
          
-          test.log(Status.PASS, "✅ Performance testing completed with detailed results");
+          perfTest.log(Status.PASS, "✅ Performance testing completed with detailed results");
           crossBrowserTest.log(Status.PASS, "✅ Performance testing completed with detailed results on " + currentBrowser.toUpperCase());
           takeShotAndAttachReport("perf_tests_complete", "Performance Tests Complete");
          
       } catch (Exception e) {
-          test.log(Status.FAIL, "❌ Performance testing failed with exception: " + e.getMessage());
+          perfTest.log(Status.FAIL, "❌ Performance testing failed with exception: " + e.getMessage());
           e.printStackTrace();
           // Capture screenshot for performance testing failure
           takeShotAndAttachReport("perf_test_failure", "Performance Test Failure");
@@ -893,13 +924,13 @@ public class Egalvanic {
  
   // ---------------- Security Testing ----------------
   static void performSecurityTesting() {
-      test = extent.createTest("Security Testing");
-      test.log(Status.INFO, "Starting security testing");
+      ExtentTest securityTest = extent.createTest("Security Testing");
+      securityTest.log(Status.INFO, "Starting security testing");
       crossBrowserTest.log(Status.INFO, "Starting security testing on " + currentBrowser.toUpperCase());
      
       try {
           // SQL Injection Test
-          test.log(Status.INFO, "Testing SQL injection protection");
+          securityTest.log(Status.INFO, "Testing SQL injection protection");
           takeShotAndAttachReport("security_before_sql_injection", "Before SQL Injection Test");
           crossBrowserTest.log(Status.INFO, "Before SQL Injection Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before SQL Injection Test - " + currentBrowser.toUpperCase());
@@ -919,14 +950,14 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "SQL injection test response status: " + response.getStatusCode());
-          test.log(Status.INFO, "SQL injection payload used: " + sqlInjectionPayload);
+          securityTest.log(Status.INFO, "SQL injection test response status: " + response.getStatusCode());
+          securityTest.log(Status.INFO, "SQL injection payload used: " + sqlInjectionPayload);
          
           // Add assertion for SQL injection test
           if (response.getStatusCode() == 400 || response.getStatusCode() == 401) {
-              test.log(Status.PASS, "✅ SQL injection protection is working correctly - Request rejected with status " + response.getStatusCode());
+              securityTest.log(Status.PASS, "✅ SQL injection protection is working correctly - Request rejected with status " + response.getStatusCode());
           } else {
-              test.log(Status.FAIL, "❌ Potential SQL injection vulnerability detected - Request was not rejected properly");
+              securityTest.log(Status.FAIL, "❌ Potential SQL injection vulnerability detected - Request was not rejected properly");
           }
          
           // Capture screenshot for SQL injection test
@@ -935,7 +966,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "SQL Injection Test - " + currentBrowser.toUpperCase());
          
           // XSS Test
-          test.log(Status.INFO, "Testing XSS protection");
+          securityTest.log(Status.INFO, "Testing XSS protection");
           takeShotAndAttachReport("security_before_xss", "Before XSS Test");
           crossBrowserTest.log(Status.INFO, "Before XSS Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before XSS Test - " + currentBrowser.toUpperCase());
@@ -953,14 +984,14 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "XSS test response status: " + response.getStatusCode());
-          test.log(Status.INFO, "XSS payload used: " + xssPayload);
+          securityTest.log(Status.INFO, "XSS test response status: " + response.getStatusCode());
+          securityTest.log(Status.INFO, "XSS payload used: " + xssPayload);
          
           // Add assertion for XSS test
           if (response.getStatusCode() == 400 || response.getStatusCode() == 401) {
-              test.log(Status.PASS, "✅ XSS protection is working correctly - Request rejected with status " + response.getStatusCode());
+              securityTest.log(Status.PASS, "✅ XSS protection is working correctly - Request rejected with status " + response.getStatusCode());
           } else {
-              test.log(Status.WARNING, "⚠️ Potential XSS vulnerability detected - Request was not handled properly");
+              securityTest.log(Status.WARNING, "⚠️ Potential XSS vulnerability detected - Request was not handled properly");
           }
          
           // Capture screenshot for XSS test
@@ -969,7 +1000,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "XSS Protection Test - " + currentBrowser.toUpperCase());
          
           // Missing Authentication Test
-          test.log(Status.INFO, "Testing missing authentication protection");
+          securityTest.log(Status.INFO, "Testing missing authentication protection");
           takeShotAndAttachReport("security_before_missing_auth", "Before Missing Auth Test");
           crossBrowserTest.log(Status.INFO, "Before Missing Auth Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Missing Auth Test - " + currentBrowser.toUpperCase());
@@ -981,13 +1012,13 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "Missing auth test response status: " + response.getStatusCode());
+          securityTest.log(Status.INFO, "Missing auth test response status: " + response.getStatusCode());
          
           // Add assertion for missing authentication test
           if (response.getStatusCode() == 401) {
-              test.log(Status.PASS, "✅ Missing authentication protection is working correctly - Request rejected with status " + response.getStatusCode());
+              securityTest.log(Status.PASS, "✅ Missing authentication protection is working correctly - Request rejected with status " + response.getStatusCode());
           } else {
-              test.log(Status.FAIL, "❌ Potential missing authentication vulnerability detected - Request was not rejected properly");
+              securityTest.log(Status.FAIL, "❌ Potential missing authentication vulnerability detected - Request was not rejected properly");
           }
          
           // Capture screenshot for missing auth test
@@ -996,7 +1027,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Missing Authentication Test - " + currentBrowser.toUpperCase());
          
           // Path Traversal Test
-          test.log(Status.INFO, "Testing path traversal protection");
+          securityTest.log(Status.INFO, "Testing path traversal protection");
           takeShotAndAttachReport("security_before_path_traversal", "Before Path Traversal Test");
           crossBrowserTest.log(Status.INFO, "Before Path Traversal Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Path Traversal Test - " + currentBrowser.toUpperCase());
@@ -1009,13 +1040,13 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "Path traversal test response status: " + response.getStatusCode());
+          securityTest.log(Status.INFO, "Path traversal test response status: " + response.getStatusCode());
          
           // Add assertion for path traversal test
           if (response.getStatusCode() == 400 || response.getStatusCode() == 401 || response.getStatusCode() == 403 || response.getStatusCode() == 404) {
-              test.log(Status.PASS, "✅ Path traversal protection is working correctly - Request rejected with status " + response.getStatusCode());
+              securityTest.log(Status.PASS, "✅ Path traversal protection is working correctly - Request rejected with status " + response.getStatusCode());
           } else {
-              test.log(Status.WARNING, "⚠️ Potential path traversal vulnerability detected - Request was not rejected properly");
+              securityTest.log(Status.WARNING, "⚠️ Potential path traversal vulnerability detected - Request was not rejected properly");
           }
          
           // Capture screenshot for path traversal test
@@ -1024,7 +1055,7 @@ public class Egalvanic {
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Path Traversal Test - " + currentBrowser.toUpperCase());
          
           // Command Injection Test
-          test.log(Status.INFO, "Testing command injection protection");
+          securityTest.log(Status.INFO, "Testing command injection protection");
           takeShotAndAttachReport("security_before_command_injection", "Before Command Injection Test");
           crossBrowserTest.log(Status.INFO, "Before Command Injection Test - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Before Command Injection Test - " + currentBrowser.toUpperCase());
@@ -1042,14 +1073,14 @@ public class Egalvanic {
                   .then()
                   .extract().response();
          
-          test.log(Status.INFO, "Command injection test response status: " + response.getStatusCode());
-          test.log(Status.INFO, "Command injection payload used: " + commandInjectionPayload);
+          securityTest.log(Status.INFO, "Command injection test response status: " + response.getStatusCode());
+          securityTest.log(Status.INFO, "Command injection payload used: " + commandInjectionPayload);
          
           // Add assertion for command injection test
           if (response.getStatusCode() == 400 || response.getStatusCode() == 401 || response.getStatusCode() == 403 || response.getStatusCode() == 404 || response.getStatusCode() == 405) {
-              test.log(Status.PASS, "✅ Command injection protection is working correctly - Request rejected with status " + response.getStatusCode());
+              securityTest.log(Status.PASS, "✅ Command injection protection is working correctly - Request rejected with status " + response.getStatusCode());
           } else {
-              test.log(Status.WARNING, "⚠️ Potential command injection vulnerability detected - Request was not rejected properly");
+              securityTest.log(Status.WARNING, "⚠️ Potential command injection vulnerability detected - Request was not rejected properly");
           }
          
           // Capture screenshot for command injection test
@@ -1057,28 +1088,28 @@ public class Egalvanic {
           crossBrowserTest.log(Status.PASS, "✅ Command Injection Test Completed - " + currentBrowser.toUpperCase());
           crossBrowserTest.addScreenCaptureFromBase64String(getBase64Screenshot(), "Command Injection Test - " + currentBrowser.toUpperCase());
          
-          test.log(Status.PASS, "Security testing completed with detailed results");
+          securityTest.log(Status.PASS, "Security testing completed with detailed results");
           crossBrowserTest.log(Status.PASS, "✅ Security testing completed with detailed results on " + currentBrowser.toUpperCase());
          
       } catch (Exception e) {
-          test.log(Status.FAIL, "Security testing failed with exception: " + e.getMessage());
+          securityTest.log(Status.FAIL, "Security testing failed with exception: " + e.getMessage());
           // Capture screenshot for security testing failure
           takeShotAndAttachReport("security_test_failure", "Security Test Failure");
       }
   }
   // ---------------- site selection (your exact code) ----------------
   static void selectSite() {
-      test.log(Status.INFO, "Selecting site");
-      test.log(Status.INFO, "Clicking on site selection dropdown");
+      crudSubFeatureTest.log(Status.INFO, "Selecting site");
+      crudSubFeatureTest.log(Status.INFO, "Clicking on site selection dropdown");
       clickable(By.xpath("//div[contains(@class,'MuiAutocomplete-root')]"), DEFAULT_TIMEOUT).click();
         
-      test.log(Status.INFO, "Waiting for site options to appear");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for site options to appear");
       wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
         
-      test.log(Status.INFO, "Scrolling to bottom of site list");
+      crudSubFeatureTest.log(Status.INFO, "Scrolling to bottom of site list");
       js.executeScript("document.querySelectorAll('ul[role=\"listbox\"] ').forEach(e => e.scrollTop=e.scrollHeight);");
         
-      test.log(Status.INFO, "Selecting 'Test Site'");
+      crudSubFeatureTest.log(Status.INFO, "Selecting 'Test Site'");
       By testSite = By.xpath("//li[normalize-space()='Test Site']");
       WebElement selected = new FluentWait<>(driver)
               .withTimeout(Duration.ofSeconds(10))
@@ -1095,24 +1126,24 @@ public class Egalvanic {
               });
         
       if (selected == null) {
-          test.log(Status.FAIL, "❌ Could not click Test Site");
+          crudSubFeatureTest.log(Status.FAIL, "❌ Could not click Test Site");
           throw new RuntimeException("❌ Could not click Test Site");
       }
         
       System.out.println("✔ Test Site Selected Successfully");
-      test.log(Status.PASS, "✅ Test Site Selected Successfully");
+      crudSubFeatureTest.log(Status.PASS, "✅ Test Site Selected Successfully");
   }
   // ---------------- go to assets ----------------
   static void goToAssets() {
-      test.log(Status.INFO, "Navigating to Assets page");
-      test.log(Status.INFO, "Clicking on Assets menu item");
+      crudSubFeatureTest.log(Status.INFO, "Navigating to Assets page");
+      crudSubFeatureTest.log(Status.INFO, "Clicking on Assets menu item");
       click(By.xpath("//span[normalize-space()='Assets'] | //a[normalize-space()='Assets'] | //button[normalize-space()='Assets']"));
      
-      test.log(Status.INFO, "Waiting for Assets page to load");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for Assets page to load");
       visible(By.xpath("//button[normalize-space()='Create Asset']"), DEFAULT_TIMEOUT);
      
       System.out.println("✔ Assets Page Loaded");
-      test.log(Status.PASS, "✅ Assets Page Loaded Successfully");
+      crudSubFeatureTest.log(Status.PASS, "✅ Assets Page Loaded Successfully");
   }
   // ------ clickCreateAsset (UPDATED & WORKING) ---------------
   static void clickCreateAsset() {
@@ -1129,61 +1160,61 @@ public class Egalvanic {
   }
   // ---------------- PHASE 1: create ----------------
   static void createAssetPhase1() {
-      test.log(Status.INFO, "=== PHASE 1: CREATE ASSET ===");
+      crudSubFeatureTest.log(Status.INFO, "=== PHASE 1: CREATE ASSET ===");
       System.out.println("=== PHASE 1: CREATE ASSET ===");
      
-      test.log(Status.INFO, "Clicking Create Asset button");
+      crudSubFeatureTest.log(Status.INFO, "Clicking Create Asset button");
       click(By.xpath("//button[normalize-space()='Create Asset']"));
      
       // ensure dialog opened
-      test.log(Status.INFO, "Waiting for Create Asset dialog to open");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for Create Asset dialog to open");
       visible(By.xpath("//*[contains(text(),'Add Asset') or contains(text(),'Create Asset') or contains(text(),'BASIC INFO')]"), DEFAULT_TIMEOUT);
      
-      test.log(Status.INFO, "Filling BASIC INFO");
+      crudSubFeatureTest.log(Status.INFO, "Filling BASIC INFO");
       // BASIC INFO: Asset Name, QR
       By assetName = By.xpath("//p[contains(text(),'Asset Name')]/following::input[1]");
       By qrCode = By.xpath("//p[contains(text(),'QR Code')]/following::input[1]");
-      test.log(Status.INFO, "Entering Asset Name: " + ASSET_NAME);
+      crudSubFeatureTest.log(Status.INFO, "Entering Asset Name: " + ASSET_NAME);
       type(assetName, ASSET_NAME);
-      test.log(Status.INFO, "Entering QR Code: " + QR_CODE);
+      crudSubFeatureTest.log(Status.INFO, "Entering QR Code: " + QR_CODE);
       type(qrCode, QR_CODE);
      
       // Asset Class (autocomplete)
-      test.log(Status.INFO, "Selecting Asset Class: " + ASSET_CLASS);
+      crudSubFeatureTest.log(Status.INFO, "Selecting Asset Class: " + ASSET_CLASS);
       By classInput = By.xpath("//p[contains(text(),'Asset Class')]/following::input[1]");
       typeAndSelectDropdown(classInput, ASSET_CLASS, ASSET_CLASS);
       pause(300);
      
       // scroll to ensure Subtype visible
-      test.log(Status.INFO, "Scrolling to Asset Subtype section");
+      crudSubFeatureTest.log(Status.INFO, "Scrolling to Asset Subtype section");
       scrollToHeader("Asset Subtype (Optional)");
       pause(300);
      
       // Subtype - pick first option if exists
-      test.log(Status.INFO, "Selecting Asset Subtype (if available)");
+      crudSubFeatureTest.log(Status.INFO, "Selecting Asset Subtype (if available)");
       By subtypeInput = By.xpath("//p[contains(text(),'Asset Subtype')]/following::input[1]");
       try {
           click(subtypeInput);
           pause(300);
           By firstOption = By.xpath("(//li[contains(@id,'option') or @role='option'])[1]");
           if (driver.findElements(firstOption).size() > 0) {
-              test.log(Status.INFO, "Selecting first available subtype");
+              crudSubFeatureTest.log(Status.INFO, "Selecting first available subtype");
               click(firstOption);
           }
       } catch (Exception e) {
-          test.log(Status.INFO, "ℹ️ Subtype not available or selection skipped");
+          crudSubFeatureTest.log(Status.INFO, "ℹ️ Subtype not available or selection skipped");
           System.out.println("ℹ️ Subtype not available or selection skipped");
       }
      
       // Select Condition = 2
-      test.log(Status.INFO, "Selecting Condition of Maintenance: " + CONDITION_VALUE);
+      crudSubFeatureTest.log(Status.INFO, "Selecting Condition of Maintenance: " + CONDITION_VALUE);
       scrollToHeader("Condition of Maintenance");
       pause(200);
       click(By.xpath("//p[contains(text(),'Condition of Maintenance')]/following::button[.//h4[normalize-space()='" + CONDITION_VALUE + "'] or normalize-space()='" + CONDITION_VALUE + "'][1]"));
       pause(300);
      
       // Expand CORE ATTRIBUTES
-      test.log(Status.INFO, "Expanding CORE ATTRIBUTES section");
+      crudSubFeatureTest.log(Status.INFO, "Expanding CORE ATTRIBUTES section");
       scrollToHeader("CORE ATTRIBUTES");
       try {
           By coreToggle = By.xpath("//h6[contains(text(),'CORE ATTRIBUTES')]/ancestor::button[1]");
@@ -1194,56 +1225,56 @@ public class Egalvanic {
                   js.executeScript("arguments[0].scrollIntoView({block:'center'});", toggle);
                   pause(200);
                   toggle.click();
-                  test.log(Status.INFO, "CORE ATTRIBUTES section expanded");
+                  crudSubFeatureTest.log(Status.INFO, "CORE ATTRIBUTES section expanded");
                   pause(400);
               } else {
-                  test.log(Status.INFO, "CORE ATTRIBUTES section already expanded");
+                  crudSubFeatureTest.log(Status.INFO, "CORE ATTRIBUTES section already expanded");
               }
           }
       } catch (Exception ignored) {}
      
       // Model
-      test.log(Status.INFO, "Entering Model: " + MODEL_VAL);
+      crudSubFeatureTest.log(Status.INFO, "Entering Model: " + MODEL_VAL);
       By modelField = By.xpath("//p[contains(text(),'Model')]/following::input[1]");
       type(modelField, MODEL_VAL);
      
       // Notes
-      test.log(Status.INFO, "Entering Notes: " + NOTES_VAL);
+      crudSubFeatureTest.log(Status.INFO, "Entering Notes: " + NOTES_VAL);
       By notesField = By.xpath("//p[contains(text(),'Notes')]/following::input[1]");
       type(notesField, NOTES_VAL);
      
       // Ampere Rating
-      test.log(Status.INFO, "Selecting Ampere Rating: " + AMPERE_RATING);
+      crudSubFeatureTest.log(Status.INFO, "Selecting Ampere Rating: " + AMPERE_RATING);
       By ampereInput = By.xpath("//p[contains(text(),'Ampere Rating')]/following::input[1]");
       typeAndSelectDropdown(ampereInput, AMPERE_RATING, AMPERE_RATING);
      
       // Manufacturer
-      test.log(Status.INFO, "Selecting Manufacturer: " + MANUFACTURER);
+      crudSubFeatureTest.log(Status.INFO, "Selecting Manufacturer: " + MANUFACTURER);
       By manuInput = By.xpath("//p[contains(text(),'Manufacturer')]/following::input[1]");
       typeAndSelectDropdown(manuInput, MANUFACTURER, MANUFACTURER);
      
       // Catalog Number
-      test.log(Status.INFO, "Entering Catalog Number: " + CATALOG_NUMBER);
+      crudSubFeatureTest.log(Status.INFO, "Entering Catalog Number: " + CATALOG_NUMBER);
       By catalogInput = By.xpath("//p[contains(text(),'Catalog Number')]/following::input[1]");
       type(catalogInput, CATALOG_NUMBER);
      
       // Breaker Settings
-      test.log(Status.INFO, "Entering Breaker Settings: " + BREAKER_SETTINGS);
+      crudSubFeatureTest.log(Status.INFO, "Entering Breaker Settings: " + BREAKER_SETTINGS);
       By breakerInput = By.xpath("//p[contains(text(),'Breaker Settings')]/following::input[1]");
       try { type(breakerInput, BREAKER_SETTINGS); } catch (Exception ignored) {}
      
       // Interrupting Rating
-      test.log(Status.INFO, "Selecting Interrupting Rating: " + INTERRUPTING_RATING);
+      crudSubFeatureTest.log(Status.INFO, "Selecting Interrupting Rating: " + INTERRUPTING_RATING);
       By interruptInput = By.xpath("//p[contains(text(),'Interrupting Rating')]/following::input[1]");
       typeAndSelectDropdown(interruptInput, INTERRUPTING_RATING, INTERRUPTING_RATING);
      
       // kA Rating
-      test.log(Status.INFO, "Selecting kA Rating: " + KA_RATING);
+      crudSubFeatureTest.log(Status.INFO, "Selecting kA Rating: " + KA_RATING);
       By kaInput = By.xpath("//p[contains(text(),'kA Rating')]/following::input[1]");
       typeAndSelectDropdown(kaInput, KA_RATING, KA_RATING);
      
       // Commercial -> Replacement Cost
-      test.log(Status.INFO, "Entering Replacement Cost: " + REPLACEMENT_COST);
+      crudSubFeatureTest.log(Status.INFO, "Entering Replacement Cost: " + REPLACEMENT_COST);
       scrollToHeader("Replacement Cost");
       By replCost = By.xpath("//p[contains(text(),'Replacement Cost')]/following::input[1]");
       try { type(replCost, REPLACEMENT_COST); }
@@ -1253,60 +1284,62 @@ public class Egalvanic {
       }
      
       // CLICK CREATE ASSET (FULLY WORKING)
-      test.log(Status.INFO, "Clicking Create Asset button to submit");
+      crudSubFeatureTest.log(Status.INFO, "Clicking Create Asset button to submit");
       clickCreateAsset();
      
       // wait for success
-      test.log(Status.INFO, "Waiting for asset creation confirmation");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for asset creation confirmation");
       try {
           wait.until(ExpectedConditions.or(
                   ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Asset created') or contains(text(),'created successfully')]")),
                   ExpectedConditions.presenceOfElementLocated(By.xpath("//table|//div[contains(@class,'asset-list') or contains(@class,'AssetList')]"))
           ));
-          test.log(Status.PASS, "✅ Asset created successfully");
+          crudSubFeatureTest.log(Status.PASS, "✅ Asset created successfully");
       } catch (Exception e) {
-          test.log(Status.WARNING, "⚠️ No explicit success toast detected — verify UI");
+          crudSubFeatureTest.log(Status.WARNING, "⚠️ No explicit success toast detected — verify UI");
           System.out.println("⚠️ No explicit success toast detected — verify UI");
       }
   }
   // ---------------- PHASE 2: edit ----------------
   static void editAssetPhase2() {
-      test.log(Status.INFO, "=== PHASE 2: EDIT ASSET ===");
+     JavascriptExecutor js = (JavascriptExecutor) driver;
+     js.executeScript("document.body.style.zoom='80%';");
+      crudSubFeatureTest.log(Status.INFO, "=== PHASE 2: EDIT ASSET ===");
       System.out.println("=== PHASE 2: EDIT ASSET ===");
      
-      test.log(Status.INFO, "Searching for asset: " + ASSET_NAME);
+      crudSubFeatureTest.log(Status.INFO, "Searching for asset: " + ASSET_NAME);
       // Try to search for the asset (if search exists)
       try {
           By search = By.xpath("//input[@placeholder='Search' or contains(@placeholder,'Search') or @aria-label='Search']");
           if (driver.findElements(search).size() > 0) {
-              test.log(Status.INFO, "Entering search term: " + ASSET_NAME);
+              crudSubFeatureTest.log(Status.INFO, "Entering search term: " + ASSET_NAME);
               type(search, ASSET_NAME);
               pause(500);
           }
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Opening asset for editing");
+      crudSubFeatureTest.log(Status.INFO, "Opening asset for editing");
       // Open edit for the asset
       try {
           By editNear = By.xpath("//div[@class='MuiDataGrid-row MuiDataGrid-row--firstVisible']//button[@title='Edit Asset']");
           if (driver.findElements(editNear).size() > 0) {
-              test.log(Status.INFO, "Clicking edit button for first visible asset");
+              crudSubFeatureTest.log(Status.INFO, "Clicking edit button for first visible asset");
               click(editNear);
           } else {
               // fallback: open first row menu and click Edit
-              test.log(Status.INFO, "Clicking menu button for first asset row");
+              crudSubFeatureTest.log(Status.INFO, "Clicking menu button for first asset row");
               click(By.xpath("(//button[contains(@class,'MuiIconButton-root')])[1]"));
               pause(400);
-              test.log(Status.INFO, "Clicking Edit option");
+              crudSubFeatureTest.log(Status.INFO, "Clicking Edit option");
               click(By.xpath("//li[normalize-space()='Edit' or contains(.,'Edit')]"));
           }
           pause(700);
       } catch (Exception e) {
-          test.log(Status.FAIL, "❌ Edit action not found for asset: " + ASSET_NAME);
+          crudSubFeatureTest.log(Status.FAIL, "❌ Edit action not found for asset: " + ASSET_NAME);
           throw new RuntimeException("Edit action not found for asset: " + ASSET_NAME, e);
       }
      
-      test.log(Status.INFO, "Ensuring CORE ATTRIBUTES section is expanded");
+      crudSubFeatureTest.log(Status.INFO, "Ensuring CORE ATTRIBUTES section is expanded");
       // Ensure CORE ATTRIBUTES expanded
       scrollToHeader("CORE ATTRIBUTES");
       try {
@@ -1318,89 +1351,120 @@ public class Egalvanic {
                   js.executeScript("arguments[0].scrollIntoView({block:'center'});", toggle);
                   pause(200);
                   toggle.click();
-                  test.log(Status.INFO, "CORE ATTRIBUTES section expanded");
+                  crudSubFeatureTest.log(Status.INFO, "CORE ATTRIBUTES section expanded");
                   pause(400);
               } else {
-                  test.log(Status.INFO, "CORE ATTRIBUTES section already expanded");
+                  crudSubFeatureTest.log(Status.INFO, "CORE ATTRIBUTES section already expanded");
               }
           }
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Editing Model and Notes fields");
+      crudSubFeatureTest.log(Status.INFO, "Editing Model and Notes fields");
       // Edit fields (hardcoded)
       try {
-          test.log(Status.INFO, "Editing Model field");
+          crudSubFeatureTest.log(Status.INFO, "Editing Model field");
           type(By.xpath("//p[contains(text(),'Model')]/following::input[1]"), "edit");
       } catch (Exception ignored) {}
      
       try {
-          test.log(Status.INFO, "Editing Notes field");
+          crudSubFeatureTest.log(Status.INFO, "Editing Notes field");
           type(By.xpath("//p[contains(text(),'Notes')]/following::input[1]"), "edit");
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Updating kA Rating selections");
+      crudSubFeatureTest.log(Status.INFO, "Updating kA Rating selections");
       // kA selection in edit
       try {
           By kaInput = By.xpath("//p[contains(text(),'kA Rating')]/following::input[1]");
-          test.log(Status.INFO, "Selecting 10 kA");
+          crudSubFeatureTest.log(Status.INFO, "Selecting 10 kA");
           typeAndSelectDropdown(kaInput, "10 kA", "10 kA");
           pause(300);
-          test.log(Status.INFO, "Selecting 18 kA");
+          crudSubFeatureTest.log(Status.INFO, "Selecting 18 kA");
           typeAndSelectDropdown(kaInput, "18 kA", "18 kA");
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Handling 'none' elements if present");
+      crudSubFeatureTest.log(Status.INFO, "Handling 'none' elements if present");
       // Double-click none if exists
       try {
           By none = By.xpath("//div[normalize-space()='none' or contains(.,'none')]");
           if (driver.findElements(none).size() > 0) {
-              test.log(Status.INFO, "Double-clicking 'none' element");
+              crudSubFeatureTest.log(Status.INFO, "Double-clicking 'none' element");
               WebElement el = driver.findElement(none);
               actions.doubleClick(el).perform();
               pause(300);
           }
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Setting Suggested Shortcut to Fuse if available");
+      crudSubFeatureTest.log(Status.INFO, "Setting Suggested Shortcut to Fuse if available");
       // Suggested Shortcut -> Fuse if present
       try {
           By shortcut = By.xpath("//p[contains(text(),'Suggested Shortcut')]/following::input[1] | //p[contains(text(),'Suggested Shortcut')]/following::div[1]//input[1]");
           if (driver.findElements(shortcut).size() > 0) {
-              test.log(Status.INFO, "Selecting 'Fuse' for Suggested Shortcut");
+              crudSubFeatureTest.log(Status.INFO, "Selecting 'Fuse' for Suggested Shortcut");
               typeAndSelectDropdown(shortcut, "Fuse", "Fuse");
           }
       } catch (Exception ignored) {}
      
-      test.log(Status.INFO, "Saving changes");
+      crudSubFeatureTest.log(Status.INFO, "Saving changes");
       // Save changes
       try {
           click(By.xpath("//button[normalize-space()='Save Changes' or contains(.,'Save Changes')]"));
       } catch (Exception e) {
           // fallback
-          test.log(Status.INFO, "Using fallback save button");
+          crudSubFeatureTest.log(Status.INFO, "Using fallback save button");
           click(By.xpath("//button[contains(.,'Save') or contains(.,'Update')][last()]"));
       }
      
       // wait for success
-      test.log(Status.INFO, "Waiting for edit confirmation");
+      crudSubFeatureTest.log(Status.INFO, "Waiting for edit confirmation");
       try {
           wait.until(ExpectedConditions.or(
                   ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'updated') or contains(text(),'saved') or contains(text(),'successfully')]")),
                   ExpectedConditions.presenceOfElementLocated(By.xpath("//table|//div[contains(@class,'asset-list') or contains(@class,'AssetList')]"))
           ));
           System.out.println("✔ Edit likely successful");
-          test.log(Status.PASS, "✅ Asset edited successfully");
+          crudSubFeatureTest.log(Status.PASS, "✅ Asset edited successfully");
       } catch (Exception e) {
-          test.log(Status.WARNING, "⚠️ No explicit edit success toast detected");
+          crudSubFeatureTest.log(Status.WARNING, "⚠️ No explicit edit success toast detected");
           System.out.println("⚠️ No explicit edit success toast detected");
       }
   }
+  static void deleteAsset() {
+
+        System.out.println("Starting Delete Asset Flow...");
+        pause(600);
+        By search = By.xpath("//input[@placeholder='Search' or contains(@placeholder,'Search') or @aria-label='Search']");
+        if (driver.findElements(search).size() > 0) {
+            type(search, ASSET_NAME);
+            pause(500);
+        }
+
+        // 1 DELETE ICON (first visible row)
+        By deleteButton = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[@title='Delete Asset'])[1]");
+
+        WebElement delBtn = wait.until(ExpectedConditions.elementToBeClickable(deleteButton));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", delBtn);
+        pause(200);
+        js.executeScript("arguments[0].click();", delBtn);
+
+        System.out.println("Delete Asset icon clicked");
+        pause(700);
+
+        // 2 CONFIRM DELETE
+        By confirmDelete = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
+
+        WebElement confirm = wait.until(ExpectedConditions.elementToBeClickable(confirmDelete));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", confirm);
+        pause(200);
+        js.executeScript("arguments[0].click();", confirm);
+
+        System.out.println("Asset delete confirmed");
+
+        // 3 No toast - wait for row to remove
+        pause(1500);
+
+        System.out.println("Asset deleted successfully");
+        System.out.println("Delete Asset Flow Completed");
+        crudSubFeatureTest.log(Status.PASS, "Asset deleted successfully");
+    }
 }
-
-
-
-
-
-
-
 
