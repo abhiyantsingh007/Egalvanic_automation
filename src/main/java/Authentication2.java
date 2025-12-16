@@ -40,9 +40,14 @@ public class Authentication2 {
     static JavascriptExecutor js;
     static Actions actions;
     static ExtentReports extent;
+    static ExtentReports summaryExtent; // Second report for pass/fail only
     static ExtentTest moduleTest; // Module level test
     static ExtentTest featureTest; // Feature level test
+    static ExtentTest summaryModuleTest; // Summary module test
+    static ExtentTest summaryFeatureTest; // Summary feature test
     static ExtentSparkReporter sparkReporter;
+    static ExtentSparkReporter summarySparkReporter;
+    
     static String currentBrowser = "chrome";
     static int passedTests = 0;
     static int failedTests = 0;
@@ -67,6 +72,12 @@ public class Authentication2 {
         featureTest = moduleTest.createNode("Login");
         featureTest.assignCategory("Login");
         
+        // Create structure for summary report
+        summaryModuleTest = summaryExtent.createTest("Authentication");
+        summaryModuleTest.assignCategory("Authentication");
+        
+        summaryFeatureTest = summaryModuleTest.createNode("Login");
+        summaryFeatureTest.assignCategory("Login");
         try {
             System.out.println("🧪 Starting Independent Authentication Test Execution");
             
@@ -83,48 +94,56 @@ public class Authentication2 {
             runTestCaseIndependently("TC10_CaseSensitivityUsername");
             runTestCaseIndependently("TC11_ExceedingMaxLengthUsername");
             runTestCaseIndependently("TC12_LeadingSpacePassword");
-            runTestCaseIndependently("TC13_OnlySpacesPassword");
+             runTestCaseIndependently("TC13_OnlySpacesPassword");
             runTestCaseIndependently("TC14_MinLengthPassword");
-            runTestCaseIndependently("TC15_MaxLengthPassword");
-            runTestCaseIndependently("TC16_SQLInjectionUsername");
+           runTestCaseIndependently("TC15_MaxLengthPassword");
+           runTestCaseIndependently("TC16_SQLInjectionUsername");
             runTestCaseIndependently("TC17_XSSUsername");
             runTestCaseIndependently("TC18_ErrorMessageCleared");
-            runTestCaseIndependently("TC19_AccessDashboardWithoutLogin");
+             runTestCaseIndependently("TC19_AccessDashboardWithoutLogin");
             runTestCaseIndependently("TC20_RefreshAfterLogin");
-            runTestCaseIndependently("TC21_EnterKeyLogin");
+              runTestCaseIndependently("TC21_EnterKeyLogin");
             runTestCaseIndependently("TC22_BackButtonSession");            
             // Add summary to report
-            featureTest.log(Status.INFO, "📊 Test Execution Summary");
+            featureTest.log(Status.INFO, "Test Execution Summary");
             featureTest.log(Status.INFO, "Total Tests: " + totalTests);
             featureTest.log(Status.PASS, "Passed Tests: " + passedTests);
             featureTest.log(Status.FAIL, "Failed Tests: " + failedTests);
             featureTest.log(Status.INFO, "Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
             
-            System.out.println("\n📊 TEST EXECUTION SUMMARY");
+            // Add summary to summary report
+            ExtentTest summaryStats = summaryFeatureTest.createNode("TestExecutionSummary");
+            summaryStats.log(Status.INFO, "Total Tests: " + totalTests);
+            summaryStats.log(Status.PASS, "Passed Tests: " + passedTests);
+            summaryStats.log(Status.FAIL, "Failed Tests: " + failedTests);
+            summaryStats.log(Status.INFO, "Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
+            
+            System.out.println("\nTEST EXECUTION SUMMARY");
             System.out.println("Total Tests: " + totalTests);
             System.out.println("Passed Tests: " + passedTests);
             System.out.println("Failed Tests: " + failedTests);
             System.out.println("Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
-            System.out.println("\n🎉 ALL AUTHENTICATION TESTS COMPLETED INDEPENDENTLY");
-            System.out.println("📄 Detailed report generated at: test-output/reports/AuthenticationReport.html");
+            System.out.println("\nALL AUTHENTICATION TESTS COMPLETED INDEPENDENTLY");
+            System.out.println("Detailed report generated at: test-output/reports/AuthenticationReport.html");
             
         } catch (Exception e) {
-            System.out.println("❌ Fatal error in test suite: " + e.getMessage());
+            System.out.println("Fatal error in test suite: " + e.getMessage());
             featureTest.log(Status.FAIL, "Fatal error in test suite: " + e.getMessage());
             e.printStackTrace();
         } finally {
             extent.flush();
-            System.out.println("✅ Report generation completed");
+            summaryExtent.flush();
+            System.out.println("Report generation completed");
+            System.out.println("Summary report generated at: test-output/reports/AuthenticationSummaryReport.html");
         }
     }
 
     static void runTestCaseIndependently(String testCaseName) {
         totalTests++;
-        ExtentTest testCase = featureTest.createNode(testCaseName, testCaseName);
+        ExtentTest testCase = featureTest.createNode(testCaseName);
         testCase.log(Status.INFO, "Starting independent execution of " + testCaseName);
         testCase.log(Status.INFO, "Execution timestamp: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));        
-        try {
-            // Setup fresh driver for each test
+        try {            // Setup fresh driver for each test
             setupDriver(currentBrowser);
             
             // Execute the specific test case
@@ -225,6 +244,7 @@ public class Authentication2 {
             System.out.println("Failed to create directories: " + e.getMessage());
         }
 
+        // Detailed report
         String reportFileName = "test-output/reports/AuthenticationReport.html";
         sparkReporter = new ExtentSparkReporter(reportFileName);
         sparkReporter.config().setTheme(Theme.STANDARD);
@@ -240,9 +260,24 @@ public class Authentication2 {
         extent.setSystemInfo("Tester", "QA Automation Engineer");
         extent.setSystemInfo("Java Version", System.getProperty("java.version"));
         extent.setSystemInfo("OS", System.getProperty("os.name"));
-    }
 
-    static void setupDriver(String browserType) {
+        // Summary report (pass/fail only)
+        String summaryReportFileName = "test-output/reports/AuthenticationSummaryReport.html";
+        summarySparkReporter = new ExtentSparkReporter(summaryReportFileName);
+        summarySparkReporter.config().setTheme(Theme.STANDARD);
+        summarySparkReporter.config().setDocumentTitle("Authentication Summary Report");
+        summarySparkReporter.config().setReportName("Authentication Test Summary Report");
+        summarySparkReporter.config().setTimeStampFormat("MMM dd, yyyy HH:mm:ss");
+
+        summaryExtent = new ExtentReports();
+        summaryExtent.attachReporter(summarySparkReporter);
+        summaryExtent.setSystemInfo("Organization", "ACME");
+        summaryExtent.setSystemInfo("Environment", "Test");
+        summaryExtent.setSystemInfo("Browser", currentBrowser);
+        summaryExtent.setSystemInfo("Tester", "QA Automation Engineer");
+        summaryExtent.setSystemInfo("Java Version", System.getProperty("java.version"));
+        summaryExtent.setSystemInfo("OS", System.getProperty("os.name"));
+    }    static void setupDriver(String browserType) {
         switch(browserType.toLowerCase()) {
             case "firefox":
                 WebDriverManager.firefoxdriver().setup();
@@ -254,7 +289,7 @@ public class Authentication2 {
                     edgeOptions.setBinary("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
                     driver = new EdgeDriver(edgeOptions);
                 } catch (Exception e) {
-                    System.out.println("⚠️ Edge WebDriver setup failed: " + e.getMessage());
+                    System.out.println("Edge WebDriver setup failed: " + e.getMessage());
                     throw e;
                 }
                 break;
@@ -308,6 +343,16 @@ public class Authentication2 {
         }
     }
 
+    // Helper method to log test results to summary report
+    static void logToSummaryReport(String testCaseName, boolean passed) {
+        ExtentTest summaryTestCase = summaryFeatureTest.createNode(testCaseName);
+        if (passed) {
+            summaryTestCase.log(Status.PASS, "PASSED");
+        } else {
+            summaryTestCase.log(Status.FAIL, "FAILED");
+        }
+    }
+
     static void takeShotAndAttachReport(String name, String testName, ExtentTest test) {
         try {
             File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
@@ -320,7 +365,7 @@ public class Authentication2 {
             String base64Image = java.util.Base64.getEncoder().encodeToString(fileContent);
             test.addScreenCaptureFromBase64String(base64Image, testName + " - " + stamp());
         } catch (Exception e) {
-            System.out.println("⚠️ Screenshot failed: " + e.getMessage());
+            System.out.println("Screenshot failed: " + e.getMessage());
             test.log(Status.WARNING, "Screenshot failed: " + e.getMessage());
         }
     }
@@ -383,13 +428,15 @@ public class Authentication2 {
                 ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Dashboard') or contains(text(),'Sites')]"))
             ));
             
-            test.log(Status.PASS, "✅ TC01 PASSED: User logged in successfully and redirected to dashboard");
+            test.log(Status.PASS, "TC01 PASSED: User logged in successfully and redirected to dashboard");
             takeShotAndAttachReport("tc01_after_login", "TC01 After Login", test);
             passedTests++;
+            logToSummaryReport("TC01_ValidCredentials", true); // Log to summary report
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC01 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC01 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc01_error", "TC01 Error", test);
             failedTests++;
+            logToSummaryReport("TC01_ValidCredentials", false); // Log to summary report
         }
     }
     
@@ -411,27 +458,32 @@ public class Authentication2 {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(@class,'alert') or contains(text(),'Incorrect')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "✅ TC02 PASSED: Error message displayed for invalid credentials");
+                    test.log(Status.PASS, "TC02 PASSED: Error message displayed for invalid credentials");
                     takeShotAndAttachReport("tc02_error_message", "TC02 Error Message", test);
+                    logToSummaryReport("TC02_InvalidCredentials", true); // Log to summary report
                 } else {
-                    test.log(Status.FAIL, "❌ TC02 FAILED: Error message not displayed");
+                    test.log(Status.FAIL, "TC02 FAILED: Error message not displayed");
                     takeShotAndAttachReport("tc02_no_error", "TC02 No Error Displayed", test);
+                    logToSummaryReport("TC02_InvalidCredentials", false); // Log to summary report
                 }
             } catch (Exception e) {
-                test.log(Status.WARNING, "⚠️ TC02: Could not locate explicit error message, checking URL");
+                test.log(Status.WARNING, "TC02: Could not locate explicit error message, checking URL");
                 // Check if still on login page
                 if (driver.getCurrentUrl().contains("login")) {
-                    test.log(Status.PASS, "✅ TC02 PASSED: Remained on login page after invalid credentials");
+                    test.log(Status.PASS, "TC02 PASSED: Remained on login page after invalid credentials");
+                    logToSummaryReport("TC02_InvalidCredentials", true); // Log to summary report
                 } else {
-                    test.log(Status.FAIL, "❌ TC02 FAILED: Navigated away from login page unexpectedly");
+                    test.log(Status.FAIL, "TC02 FAILED: Navigated away from login page unexpectedly");
+                    logToSummaryReport("TC02_InvalidCredentials", false); // Log to summary report
                 }
                 takeShotAndAttachReport("tc02_check", "TC02 Check", test);
             }
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC02 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC02 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc02_error", "TC02 Error", test);
             failedTests++;
+            logToSummaryReport("TC02_InvalidCredentials", false); // Log to summary report
         }
     }
     
@@ -450,24 +502,24 @@ public class Authentication2 {
             
             // Check result - system may trim or reject
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "✅ TC03 PASSED: System trimmed trailing space and allowed login");
+                test.log(Status.PASS, "TC03 PASSED: System trimmed trailing space and allowed login");
             } else {
                 // Check for error message
                 try {
                     WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'Invalid')]"));
                     if (errorMsg.isDisplayed()) {
-                        test.log(Status.PASS, "✅ TC03 PASSED: System rejected username with trailing space");
+                        test.log(Status.PASS, "TC03 PASSED: System rejected username with trailing space");
                     } else {
-                        test.log(Status.WARNING, "⚠️ TC03: Unexpected behavior with trailing space");
+                        test.log(Status.WARNING, "TC03: Unexpected behavior with trailing space");
                     }
                 } catch (Exception ex) {
-                    test.log(Status.WARNING, "⚠️ TC03: Unclear handling of trailing space");
+                    test.log(Status.WARNING, "TC03: Unclear handling of trailing space");
                 }
             }
             takeShotAndAttachReport("tc03_result", "TC03 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC03 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC03 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc03_error", "TC03 Error", test);
             failedTests++;
         }
@@ -488,24 +540,24 @@ public class Authentication2 {
             
             // Check result
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "✅ TC04 PASSED: System trimmed leading space and allowed login");
+                test.log(Status.PASS, "TC04 PASSED: System trimmed leading space and allowed login");
             } else {
                 // Check for error message
                 try {
                     WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'Invalid')]"));
                     if (errorMsg.isDisplayed()) {
-                        test.log(Status.PASS, "✅ TC04 PASSED: System rejected username with leading space");
+                        test.log(Status.PASS, "TC04 PASSED: System rejected username with leading space");
                     } else {
-                        test.log(Status.WARNING, "⚠️ TC04: Unexpected behavior with leading space");
+                        test.log(Status.WARNING, "TC04: Unexpected behavior with leading space");
                     }
                 } catch (Exception ex) {
-                    test.log(Status.WARNING, "⚠️ TC04: Unclear handling of leading space");
+                    test.log(Status.WARNING, "TC04: Unclear handling of leading space");
                 }
             }
             takeShotAndAttachReport("tc04_result", "TC04 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC04 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC04 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc04_error", "TC04 Error", test);
             failedTests++;
         }
@@ -526,24 +578,24 @@ public class Authentication2 {
             
             // Check result
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "✅ TC05 PASSED: System trimmed leading/trailing spaces and allowed login");
+                test.log(Status.PASS, "TC05 PASSED: System trimmed leading/trailing spaces and allowed login");
             } else {
                 // Check for error message
                 try {
                     WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'Invalid')]"));
                     if (errorMsg.isDisplayed()) {
-                        test.log(Status.PASS, "✅ TC05 PASSED: System rejected username with leading/trailing spaces");
+                        test.log(Status.PASS, "TC05 PASSED: System rejected username with leading/trailing spaces");
                     } else {
-                        test.log(Status.WARNING, "⚠️ TC05: Unexpected behavior with leading/trailing spaces");
+                        test.log(Status.WARNING, "TC05: Unexpected behavior with leading/trailing spaces");
                     }
                 } catch (Exception ex) {
-                    test.log(Status.WARNING, "⚠️ TC05: Unclear handling of leading/trailing spaces");
+                    test.log(Status.WARNING, "TC05: Unclear handling of leading/trailing spaces");
                 }
             }
             takeShotAndAttachReport("tc05_result", "TC05 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC05 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC05 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc05_error", "TC05 Error", test);
             failedTests++;
         }
@@ -566,17 +618,17 @@ public class Authentication2 {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'required')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "✅ TC06 PASSED: Validation message shown for username with only spaces");
+                    test.log(Status.PASS, "TC06 PASSED: Validation message shown for username with only spaces");
                 } else {
-                    test.log(Status.FAIL, "❌ TC06 FAILED: No validation message for username with only spaces");
+                    test.log(Status.FAIL, "TC06 FAILED: No validation message for username with only spaces");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "⚠️ TC06: Could not locate validation message");
+                test.log(Status.WARNING, "TC06: Could not locate validation message");
             }
             takeShotAndAttachReport("tc06_result", "TC06 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC06 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC06 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc06_error", "TC06 Error", test);
             failedTests++;
         }
@@ -597,16 +649,19 @@ public class Authentication2 {
             
             // Check result - should fail as password with space is different
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.WARNING, "⚠️ TC07: Login succeeded with trailing space in password - potential security issue");
+                test.log(Status.WARNING, "TC07: Login succeeded with trailing space in password - potential security issue");
+                logToSummaryReport("TC07_TrailingSpacePassword", false); // Log to summary report
             } else {
-                test.log(Status.PASS, "✅ TC07 PASSED: Login failed with trailing space in password");
+                test.log(Status.PASS, "TC07 PASSED: Login failed with trailing space in password");
+                logToSummaryReport("TC07_TrailingSpacePassword", true); // Log to summary report
             }
             takeShotAndAttachReport("tc07_result", "TC07 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "❌ TC07 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "TC07 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc07_error", "TC07 Error", test);
             failedTests++;
+            logToSummaryReport("TC07_TrailingSpacePassword", false); // Log to summary report
         }
     }
     
