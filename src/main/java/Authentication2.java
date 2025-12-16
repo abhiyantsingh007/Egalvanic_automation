@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * Comprehensive Authentication Test Automation
  * Each test case runs independently without impacting others
- * Generates detailed HTML reports with screenshots
+ * Generates detailed HTML reports with screenshots following Module/Feature pattern
  */
 public class Authentication2 {
     static WebDriver driver;
@@ -40,7 +40,8 @@ public class Authentication2 {
     static JavascriptExecutor js;
     static Actions actions;
     static ExtentReports extent;
-    static ExtentTest testSuite;
+    static ExtentTest moduleTest; // Module level test
+    static ExtentTest featureTest; // Feature level test
     static ExtentSparkReporter sparkReporter;
     static String currentBrowser = "chrome";
     static int passedTests = 0;
@@ -56,8 +57,15 @@ public class Authentication2 {
     public static void main(String[] args) {
         currentBrowser = args.length > 0 ? args[0] : "chrome";
         setupExtentReports();
-        testSuite = extent.createTest("Authentication Test Suite");
-        testSuite.assignCategory("Authentication");
+        
+        // Create the hierarchical test structure for reporting
+        // Module = Authentication
+        moduleTest = extent.createTest("Authentication");
+        moduleTest.assignCategory("Authentication");
+        
+        // Feature = Login
+        featureTest = moduleTest.createNode("Login");
+        featureTest.assignCategory("Login");
         
         try {
             System.out.println("🧪 Starting Independent Authentication Test Execution");
@@ -84,14 +92,13 @@ public class Authentication2 {
             runTestCaseIndependently("TC19_AccessDashboardWithoutLogin");
             runTestCaseIndependently("TC20_RefreshAfterLogin");
             runTestCaseIndependently("TC21_EnterKeyLogin");
-            runTestCaseIndependently("TC22_BackButtonSession");
-            
+            runTestCaseIndependently("TC22_BackButtonSession");            
             // Add summary to report
-            testSuite.log(Status.INFO, "📊 Test Execution Summary");
-            testSuite.log(Status.INFO, "Total Tests: " + totalTests);
-            testSuite.log(Status.PASS, "Passed Tests: " + passedTests);
-            testSuite.log(Status.FAIL, "Failed Tests: " + failedTests);
-            testSuite.log(Status.INFO, "Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
+            featureTest.log(Status.INFO, "📊 Test Execution Summary");
+            featureTest.log(Status.INFO, "Total Tests: " + totalTests);
+            featureTest.log(Status.PASS, "Passed Tests: " + passedTests);
+            featureTest.log(Status.FAIL, "Failed Tests: " + failedTests);
+            featureTest.log(Status.INFO, "Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
             
             System.out.println("\n📊 TEST EXECUTION SUMMARY");
             System.out.println("Total Tests: " + totalTests);
@@ -99,11 +106,11 @@ public class Authentication2 {
             System.out.println("Failed Tests: " + failedTests);
             System.out.println("Success Rate: " + (totalTests > 0 ? (passedTests * 100 / totalTests) : 0) + "%");
             System.out.println("\n🎉 ALL AUTHENTICATION TESTS COMPLETED INDEPENDENTLY");
-            System.out.println("📄 Detailed report generated at: test-output/reports/IndependentAuthenticationReport.html");
+            System.out.println("📄 Detailed report generated at: test-output/reports/AuthenticationReport.html");
             
         } catch (Exception e) {
             System.out.println("❌ Fatal error in test suite: " + e.getMessage());
-            testSuite.log(Status.FAIL, "Fatal error in test suite: " + e.getMessage());
+            featureTest.log(Status.FAIL, "Fatal error in test suite: " + e.getMessage());
             e.printStackTrace();
         } finally {
             extent.flush();
@@ -113,10 +120,9 @@ public class Authentication2 {
 
     static void runTestCaseIndependently(String testCaseName) {
         totalTests++;
-        ExtentTest testCase = testSuite.createNode("Test Case: " + testCaseName);
+        ExtentTest testCase = featureTest.createNode(testCaseName, testCaseName);
         testCase.log(Status.INFO, "Starting independent execution of " + testCaseName);
-        testCase.log(Status.INFO, "Execution timestamp: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        
+        testCase.log(Status.INFO, "Execution timestamp: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));        
         try {
             // Setup fresh driver for each test
             setupDriver(currentBrowser);
@@ -219,10 +225,10 @@ public class Authentication2 {
             System.out.println("Failed to create directories: " + e.getMessage());
         }
 
-        String reportFileName = "test-output/reports/IndependentAuthenticationReport.html";
+        String reportFileName = "test-output/reports/AuthenticationReport.html";
         sparkReporter = new ExtentSparkReporter(reportFileName);
         sparkReporter.config().setTheme(Theme.STANDARD);
-        sparkReporter.config().setDocumentTitle("Independent Authentication Test Report");
+        sparkReporter.config().setDocumentTitle("Authentication Test Report");
         sparkReporter.config().setReportName("Authentication Test Automation Report");
         sparkReporter.config().setTimeStampFormat("MMM dd, yyyy HH:mm:ss");
 
