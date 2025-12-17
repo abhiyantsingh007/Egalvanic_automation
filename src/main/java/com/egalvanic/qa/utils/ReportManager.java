@@ -119,14 +119,15 @@ public class ReportManager {
     }
     
     /**
-     * Log a message with status to a test in the summary report (only pass/fail)
+     * Log a message with status to a test in the summary report
+     * For summary report, we want to show INFO messages for statistics as well
      * @param test Test to log to
-     * @param status Status of the log (only PASS/FAIL will be recorded)
+     * @param status Status of the log
      * @param message Message to log
      */
     public static void logSummary(ExtentTest test, Status status, String message) {
-        // Only log PASS/FAIL status in summary report, filter out INFO/WARNING/ERROR details
-        if (status == Status.PASS || status == Status.FAIL) {
+        // For summary report, we log PASS/FAIL/INFO to show statistics
+        if (status == Status.PASS || status == Status.FAIL || status == Status.INFO) {
             test.log(status, message);
         }
     }
