@@ -57,6 +57,13 @@
             <artifactId>json</artifactId>
             <version>20231013</version>
         </dependency>
+        
+        <!-- Appium Java Client for mobile testing -->
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>8.6.0</version>
+        </dependency>
     </dependencies>
 
     <build>
