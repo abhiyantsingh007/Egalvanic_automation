@@ -5,8 +5,8 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>dropdown-test</artifactId>
+    <groupId>com.egalvanic</groupId>
+    <artifactId>qa-automation-suite</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -92,7 +92,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>Authentication</mainClass>
+                    <mainClass>com.egalvanic.qa.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>
