@@ -34,4 +34,17 @@
             <class name="com.acme.tests.performance.APIPerformanceTest"/>
         </classes>
     </test>
+
+    <test name="Mobile-Functional-Tests">
+        <classes>
+            <class name="com.acme.tests.mobile.SampleMobileTest"/>
+            <class name="com.acme.tests.mobile.MobileLoginTest"/>
+        </classes>
+    </test>
+
+    <test name="Utilities-Functional-Tests">
+        <classes>
+            <class name="com.acme.tests.utilities.TestDataManagerTest"/>
+        </classes>
+    </test>
 </suite>

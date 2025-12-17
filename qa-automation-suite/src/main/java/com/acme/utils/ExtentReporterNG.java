@@ -21,10 +21,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExtentReporterNG implements ITestListener, ISuiteListener {
     private static ExtentReports extent;
     private static ThreadLocal<ExtentTest> test = new ThreadLocal<>();
+    private static ThreadLocal<ExtentTest> classTest = new ThreadLocal<>();
+    private static Map<String, ExtentTest> classTestsMap = new HashMap<>();
     
     /**
      * Initialize ExtentReports
@@ -54,27 +58,54 @@ public class ExtentReporterNG implements ITestListener, ISuiteListener {
         
         // Configure reporter
         sparkReporter.config().setTheme(Theme.STANDARD);
-        sparkReporter.config().setDocumentTitle("ACME Automation Report");
-        sparkReporter.config().setReportName("ACME Test Automation Report");
+        sparkReporter.config().setDocumentTitle(System.getProperty("report.title", "ACME Automation Report"));
+        sparkReporter.config().setReportName(System.getProperty("report.name", "ACME Test Automation Report"));
         
         // Initialize ExtentReports
         extent = new ExtentReports();
         extent.attachReporter(sparkReporter);
         
         // Set system info
-        extent.setSystemInfo("Organization", "ACME");
-        extent.setSystemInfo("Environment", "Test");
-        extent.setSystemInfo("Browser", "Chrome");
+        extent.setSystemInfo("Organization", System.getProperty("organization", "ACME"));
+        extent.setSystemInfo("Environment", System.getProperty("environment", "Test"));
+        extent.setSystemInfo("Browser", System.getProperty("browser", "Chrome"));
         extent.setSystemInfo("Tester", "QA Automation Engineer");
+        extent.setSystemInfo("Java Version", System.getProperty("java.version"));
+        extent.setSystemInfo("OS", System.getProperty("os.name"));
     }
     
     /**
-     * Create a test in the report
+     * Create a test in the report with hierarchical structure
      */
     public static void createTest(String testName) {
         if (test.get() == null) {
             test.set(getInstance().createTest(testName));
         }
+    }
+    
+    /**
+     * Create a class-level test node
+     */
+    public static void createClassTest(String className) {
+        ExtentTest classTestNode = classTestsMap.get(className);
+        if (classTestNode == null) {
+            classTestNode = getInstance().createTest("Class: " + className);
+            classTestsMap.put(className, classTestNode);
+        }
+        classTest.set(classTestNode);
+    }
+    
+    /**
+     * Create a method-level test node under class node
+     */
+    public static void createMethodTest(String className, String methodName) {
+        ExtentTest classTestNode = classTestsMap.get(className);
+        if (classTestNode == null) {
+            classTestNode = getInstance().createTest("Class: " + className);
+            classTestsMap.put(className, classTestNode);
+        }
+        ExtentTest methodTest = classTestNode.createNode("Method: " + methodName);
+        test.set(methodTest);
     }
     
     /**
@@ -110,6 +141,15 @@ public class ExtentReporterNG implements ITestListener, ISuiteListener {
     public static void logWarning(String message) {
         if (test.get() != null) {
             test.get().log(Status.WARNING, message);
+        }
+    }
+    
+    /**
+     * Log skip message
+     */
+    public static void logSkip(String message) {
+        if (test.get() != null) {
+            test.get().log(Status.SKIP, message);
         }
     }
     
@@ -159,8 +199,10 @@ public class ExtentReporterNG implements ITestListener, ISuiteListener {
     // Implementing ITestListener methods
     @Override
     public void onTestStart(ITestResult result) {
-        createTest(result.getMethod().getMethodName());
-        logInfo("Test started: " + result.getMethod().getMethodName());
+        String className = result.getTestClass().getName();
+        String methodName = result.getMethod().getMethodName();
+        createMethodTest(className, methodName);
+        logInfo("Test started: " + methodName);
     }
     
     @Override
@@ -174,15 +216,31 @@ public class ExtentReporterNG implements ITestListener, ISuiteListener {
     public void onTestFailure(ITestResult result) {
         logFail("Test failed: " + result.getMethod().getMethodName());
         logFail("Failure reason: " + result.getThrowable().getMessage());
+        
+        // Attach screenshot on failure
+        try {
+            WebDriver driver = BaseConfig.getDriver();
+            if (driver != null) {
+                attachScreenshot(driver, "FAILURE_" + result.getMethod().getMethodName());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to attach failure screenshot: " + e.getMessage());
+        }
+        
         // Clear the thread local after test completion
         test.remove();
     }
     
     @Override
     public void onTestSkipped(ITestResult result) {
-        logWarning("Test skipped: " + result.getMethod().getMethodName());
+        logSkip("Test skipped: " + result.getMethod().getMethodName());
         // Clear the thread local after test completion
         test.remove();
+    }
+    
+    @Override
+    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+        logWarning("Test failed but within success percentage: " + result.getMethod().getMethodName());
     }
     
     // Implementing ISuiteListener methods
