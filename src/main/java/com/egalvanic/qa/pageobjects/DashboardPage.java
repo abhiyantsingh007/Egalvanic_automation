@@ -1,18 +1,44 @@
 package com.egalvanic.qa.pageobjects;
 
-import com.egalvanic.qa.testcase.BaseTest;
-import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.By;
+
+import java.time.Duration;
 
 /**
  * Page Object Model for Dashboard Page
  */
-public class DashboardPage extends BaseTest {
+public class DashboardPage {
     
-    // Locators
-    private By navigationMenu = By.cssSelector("nav");
-    private By dashboardHeader = By.xpath("//*[contains(text(),'Dashboard') or contains(text(),'Sites')]");
-    private By logoutLink = By.xpath("//a[contains(@href,'logout') or contains(text(),'Logout')]");
+    WebDriver driver;
+    WebDriverWait wait;
+    
+    // PageFactory elements
+    @FindBy(css = "nav")
+    WebElement navigationMenu;
+    
+    @FindBy(xpath = "//*[contains(text(),'Dashboard') or contains(text(),'Sites')]")
+    WebElement dashboardHeader;
+    
+    @FindBy(xpath = "//a[contains(@href,'logout') or contains(text(),'Logout')]")
+    WebElement logoutLink;
+    
+    static final int DEFAULT_TIMEOUT = 25;
+    
+    /**
+     * Constructor that initializes PageFactory elements
+     */
+    public DashboardPage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_TIMEOUT));
+        // This initElements method will create all WebElements
+        PageFactory.initElements(driver, this);
+    }
     
     /**
      * Wait for dashboard to load
@@ -21,8 +47,8 @@ public class DashboardPage extends BaseTest {
     public boolean waitForDashboard() {
         try {
             wait.until(ExpectedConditions.or(
-                ExpectedConditions.presenceOfElementLocated(navigationMenu),
-                ExpectedConditions.presenceOfElementLocated(dashboardHeader)
+                ExpectedConditions.presenceOfElementLocated(By.cssSelector("nav")),
+                ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Dashboard') or contains(text(),'Sites')]"))
             ));
             return true;
         } catch (Exception e) {
@@ -42,6 +68,6 @@ public class DashboardPage extends BaseTest {
      * Click logout link
      */
     public void clickLogout() {
-        click(logoutLink);
+        logoutLink.click();
     }
 }

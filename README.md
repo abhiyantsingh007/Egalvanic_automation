@@ -1,103 +1,125 @@
-# Egalvanic Automation Project
+# QA Automation Suite
 
-This repository contains comprehensive automation suites for testing the Egalvanic platform. The project is organized into multiple components to facilitate different testing approaches and requirements.
+This is a comprehensive QA automation suite for testing the ACME application authentication functionality.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-.
-├── qa-automation-suite/          # Professional TestNG-based automation suite
-│   ├── src/
-│   │   ├── main/java/com/acme/   # Framework core (config, pages, utilities)
-│   │   └── test/java/com/acme/   # Test implementations (UI, API, Security, Performance)
-│   ├── pom.xml                   # Maven dependencies and build configuration
-│   └── testng.xml                # Test suite configuration
-│
-├── standalone-scripts/           # Individual Java automation scripts
-│   ├── Egalvanic.java            # Comprehensive asset management automation
-│   └── Other standalone scripts
-│
-├── documentation/                # Project documentation and guides
-│   ├── README.md                 # Main documentation
-│   ├── Quick Start Guide.md      # Getting started instructions
-│   └── Technical Specifications.md
-│
-├── scripts/                      # Execution scripts and utilities
-│   ├── run_tests.sh              # Test execution scripts
-│   ├── package_report.py         # Report generation utilities
-│   └── helper scripts
-│
-├── test-output/                  # Generated test artifacts (during execution)
-│   ├── reports/                  # HTML and Allure reports
-│   └── screenshots/              # Test execution screenshots
-│
-├── reports/                      # Archived reports and packaged results
-├── screenshots/                  # Archived screenshots from previous executions
-├── target/                       # Compiled Java classes
-└── src/                          # Source code for main project
+qa-automation-suite/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/egalvanic/qa/
+│   │   │       ├── Main.java
+│   │   │       ├── testcase/
+│   │   │       │   ├── BaseTest.java
+│   │   │       │   ├── AuthenticationTest.java
+│   │   │       │   └── AuthenticationTestNG.java
+│   │   │       ├── pageobjects/
+│   │   │       │   ├── LoginPage.java
+│   │   │       │   └── DashboardPage.java
+│   │   │       ├── locators/
+│   │   │       │   ├── LoginLocators.java
+│   │   │       │   └── DashboardLocators.java
+│   │   │       └── utils/
+│   │   │           ├── DriverManager.java
+│   │   │           ├── ReportManager.java
+│   │   │           └── ConfigReader.java
+│   │   └── resources/
+│   │       └── config.properties
+├── test-output/
+│   ├── reports/
+│   └── screenshots/
+├── pom.xml
+└── testng.xml
 ```
 
-## 🎯 Key Directories Explained
+## Prerequisites
 
-### `qa-automation-suite/` - Professional Test Framework
-This is the main automation framework built with industry best practices:
-- **Page Object Model** architecture for maintainable code
-- **TestNG** for test organization and execution
-- **Extent Reports** and **Allure** for professional reporting
-- Comprehensive coverage: UI, API, Security, and Performance testing
+- Java 11 or higher
+- Maven
+- Chrome browser
 
-### `standalone-scripts/` - Quick Automation Solutions
-Individual Java scripts for specific automation tasks that can be executed independently.
+## Configuration
 
-### `documentation/` - Project Guides and References
-All project documentation, including setup guides, technical specifications, and workflow explanations.
+The application uses a property file for configuration located at `src/main/resources/config.properties`:
 
-### `scripts/` - Execution and Utility Scripts
-Helper scripts for running tests, packaging reports, and other automation tasks.
+```properties
+# Application Configuration
+base.url=https://acme.qa.egalvanic.ai
+user.email=rahul+acme@egalvanic.com
+user.password=RP@egalvanic123
 
-### `reports/` and `screenshots/` - Archived Test Artifacts
-Previously generated reports and screenshots for reference.
+# Test Configuration
+default.timeout=25
+browser.type=chrome
 
-## 🚀 Quick Start
+# Report Configuration
+report.directory=test-output/reports
+screenshot.directory=test-output/screenshots
+```
 
-### For Professional Test Suite (Recommended)
+## Running Tests
+
+### Option 1: Using TestNG (Recommended)
+
+To run the TestNG test suite with all 22 test cases:
+
 ```bash
-cd qa-automation-suite
-mvn clean install    # Install dependencies
-mvn test             # Run all tests
+mvn test
 ```
 
-Open `test-output/reports/AutomationReport.html` to view results.
+This will execute all tests defined in the `testng.xml` file and generate detailed reports.
 
-### For Standalone Scripts
+### Option 2: Using Main Class
+
+To run the original test suite:
+
 ```bash
-cd standalone-scripts
-javac Egalvanic.java
-java Egalvanic
+mvn exec:java
 ```
 
-## 🧪 Test Coverage
+## Test Cases
 
-- **UI Testing**: Login, navigation, form submissions, dropdown interactions
-- **API Testing**: Authentication, user management, CRUD operations
-- **Security Testing**: SQL injection, XSS, authentication bypass
-- **Performance Testing**: Page load times, API response metrics
+The suite includes 22 comprehensive authentication test cases covering:
 
-## 📊 Reporting
+1. Valid credentials login
+2. Invalid credentials login
+3. Username with trailing spaces
+4. Username with leading spaces
+5. Username with leading and trailing spaces
+6. Username with only spaces
+7. Password with trailing spaces
+8. Username with special characters
+9. Numeric-only username
+10. Case sensitivity in username
+11. Exceeding maximum length username
+12. Password with leading spaces
+13. Password with only spaces
+14. Minimum length password
+15. Maximum length password
+16. SQL injection in username
+17. XSS attack in username
+18. Error message clearing
+19. Unauthorized dashboard access
+20. Session persistence after refresh
+21. Login using Enter key
+22. Session handling with back button
 
-- **Extent Reports**: Detailed HTML reports with screenshots
-- **Allure Reports**: Interactive dashboards with analytics
-- **Screenshots**: Automatic capture for failed tests
+## Reports
 
-## 👥 For Senior Reviewers
+Test execution generates detailed HTML reports using Extent Reports:
 
-This project demonstrates:
-1. **Industry-standard automation practices** following established frameworks
-2. **Clean code architecture** using Page Object Model design pattern
-3. **Comprehensive test coverage** across multiple testing layers
-4. **Professional reporting** with actionable insights
-5. **CI/CD readiness** with standardized execution patterns
-6. **Well-organized structure** for easy maintenance and scalability
+- **Primary Report**: `test-output/reports/TestReport.html`
+- **Authentication Report**: `test-output/reports/AuthenticationReport.html`
+- **Screenshots**: `test-output/screenshots/`
 
----
-*Contact: QA Automation Team*
+## Technologies Used
+
+- Java 11+
+- Selenium WebDriver 4.16.1
+- WebDriverManager 5.6.3
+- TestNG 7.8.0
+- ExtentReports 5.0.9
+- REST Assured 5.4.0
+- Apache HttpClient 4.5.13

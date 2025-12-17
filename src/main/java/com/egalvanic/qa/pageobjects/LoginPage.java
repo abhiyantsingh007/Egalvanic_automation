@@ -1,26 +1,49 @@
 package com.egalvanic.qa.pageobjects;
 
 import com.egalvanic.qa.testcase.BaseTest;
-import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.By;
 
 /**
  * Page Object Model for Login Page
+ * Implements PageFactory pattern for better element management
  */
-public class LoginPage extends BaseTest {
+public class LoginPage {
     
-    // Locators
-    private By emailField = By.id("email");
-    private By passwordField = By.id("password");
-    private By loginButton = By.xpath("//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]");
-    private By errorMessage = By.xpath("//div[contains(@class,'error') or contains(@class,'alert') or contains(text(),'Incorrect')]");
+    WebDriver driver;
+    
+    // PageFactory elements
+    @FindBy(id = "email")
+    WebElement emailField;
+    
+    @FindBy(id = "password")
+    WebElement passwordField;
+    
+    @FindBy(xpath = "//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]")
+    WebElement loginButton;
+    
+    @FindBy(xpath = "//div[contains(@class,'error') or contains(@class,'alert') or contains(text(),'Incorrect')]")
+    WebElement errorMessage;
+    
+    /**
+     * Constructor that initializes PageFactory elements
+     */
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+        // This initElements method will create all WebElements
+        PageFactory.initElements(driver, this);
+    }
     
     /**
      * Enter email in the email field
      * @param email Email to enter
      */
     public void enterEmail(String email) {
-        type(emailField, email);
+        emailField.clear();
+        emailField.sendKeys(email);
     }
     
     /**
@@ -28,22 +51,23 @@ public class LoginPage extends BaseTest {
      * @param password Password to enter
      */
     public void enterPassword(String password) {
-        type(passwordField, password);
+        passwordField.clear();
+        passwordField.sendKeys(password);
     }
     
     /**
      * Click the login button
      */
     public void clickLoginButton() {
-        click(loginButton);
+        loginButton.click();
     }
     
     /**
      * Get the error message element
      * @return Error message WebElement
      */
-    public WebElement getErrorMessage() {
-        return visible(errorMessage, DEFAULT_TIMEOUT);
+    public String getErrorMessageText() {
+        return errorMessage.getText();
     }
     
     /**
@@ -52,7 +76,7 @@ public class LoginPage extends BaseTest {
      */
     public boolean isErrorMessageDisplayed() {
         try {
-            return getErrorMessage().isDisplayed();
+            return errorMessage.isDisplayed();
         } catch (Exception e) {
             return false;
         }
