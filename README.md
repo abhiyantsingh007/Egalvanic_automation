@@ -1,56 +1,103 @@
-# Selenium Automation Project
+# Egalvanic Automation Project
 
-This project automates the login process for https://acme.egalvanic.ai using Selenium WebDriver with Java.
+This repository contains comprehensive automation suites for testing the Egalvanic platform. The project is organized into multiple components to facilitate different testing approaches and requirements.
 
-## Prerequisites
-
-- Java 11 or higher
-- Maven
-- Chrome browser
-
-## Dependencies
-
-- Selenium WebDriver
-- WebDriverManager
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 .
-├── pom.xml
-└── src/
-    └── main/
-        └── java/
-            └── com/
-                └── example/
-                    └── LoginAutomation.java
+├── qa-automation-suite/          # Professional TestNG-based automation suite
+│   ├── src/
+│   │   ├── main/java/com/acme/   # Framework core (config, pages, utilities)
+│   │   └── test/java/com/acme/   # Test implementations (UI, API, Security, Performance)
+│   ├── pom.xml                   # Maven dependencies and build configuration
+│   └── testng.xml                # Test suite configuration
+│
+├── standalone-scripts/           # Individual Java automation scripts
+│   ├── Egalvanic.java            # Comprehensive asset management automation
+│   └── Other standalone scripts
+│
+├── documentation/                # Project documentation and guides
+│   ├── README.md                 # Main documentation
+│   ├── Quick Start Guide.md      # Getting started instructions
+│   └── Technical Specifications.md
+│
+├── scripts/                      # Execution scripts and utilities
+│   ├── run_tests.sh              # Test execution scripts
+│   ├── package_report.py         # Report generation utilities
+│   └── helper scripts
+│
+├── test-output/                  # Generated test artifacts (during execution)
+│   ├── reports/                  # HTML and Allure reports
+│   └── screenshots/              # Test execution screenshots
+│
+├── reports/                      # Archived reports and packaged results
+├── screenshots/                  # Archived screenshots from previous executions
+├── target/                       # Compiled Java classes
+└── src/                          # Source code for main project
 ```
 
-## How to Run
+## 🎯 Key Directories Explained
 
-1. Compile the project:
-   ```
-   mvn compile
-   ```
+### `qa-automation-suite/` - Professional Test Framework
+This is the main automation framework built with industry best practices:
+- **Page Object Model** architecture for maintainable code
+- **TestNG** for test organization and execution
+- **Extent Reports** and **Allure** for professional reporting
+- Comprehensive coverage: UI, API, Security, and Performance testing
 
-2. Run the automation:
-   ```
-   mvn exec:java -Dexec.mainClass="com.example.LoginAutomation"
-   ```
+### `standalone-scripts/` - Quick Automation Solutions
+Individual Java scripts for specific automation tasks that can be executed independently.
 
-## What the Script Does
+### `documentation/` - Project Guides and References
+All project documentation, including setup guides, technical specifications, and workflow explanations.
 
-1. Opens Chrome browser
-2. Navigates to https://acme.egalvanic.ai
-3. Enters email: rahul+acme@egalvanic.com
+### `scripts/` - Execution and Utility Scripts
+Helper scripts for running tests, packaging reports, and other automation tasks.
 
-5. Clicks the login button
-6. Waits for the page to load
-7. Looks for a site dropdown and selects "test site"
+### `reports/` and `screenshots/` - Archived Test Artifacts
+Previously generated reports and screenshots for reference.
 
-## Customization
+## 🚀 Quick Start
 
-You can modify the following values in the [LoginAutomation.java](file:///Users/vishwa/Downloads/Scupltsoft/Selenium_automation_qoder/src/main/java/com/example/LoginAutomation.java#L17-L82) file:
-- Email address (line 32)
-- Password (line 37)
-- Target URL (line 29)
+### For Professional Test Suite (Recommended)
+```bash
+cd qa-automation-suite
+mvn clean install    # Install dependencies
+mvn test             # Run all tests
+```
+
+Open `test-output/reports/AutomationReport.html` to view results.
+
+### For Standalone Scripts
+```bash
+cd standalone-scripts
+javac Egalvanic.java
+java Egalvanic
+```
+
+## 🧪 Test Coverage
+
+- **UI Testing**: Login, navigation, form submissions, dropdown interactions
+- **API Testing**: Authentication, user management, CRUD operations
+- **Security Testing**: SQL injection, XSS, authentication bypass
+- **Performance Testing**: Page load times, API response metrics
+
+## 📊 Reporting
+
+- **Extent Reports**: Detailed HTML reports with screenshots
+- **Allure Reports**: Interactive dashboards with analytics
+- **Screenshots**: Automatic capture for failed tests
+
+## 👥 For Senior Reviewers
+
+This project demonstrates:
+1. **Industry-standard automation practices** following established frameworks
+2. **Clean code architecture** using Page Object Model design pattern
+3. **Comprehensive test coverage** across multiple testing layers
+4. **Professional reporting** with actionable insights
+5. **CI/CD readiness** with standardized execution patterns
+6. **Well-organized structure** for easy maintenance and scalability
+
+---
+*Contact: QA Automation Team*
