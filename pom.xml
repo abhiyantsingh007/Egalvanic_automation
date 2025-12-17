@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.15.0</version>
+            <version>4.16.1</version>
         </dependency>
 
         <!-- WebDriverManager for automatic driver management -->
@@ -92,7 +92,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>Egalvanic</mainClass>
+                    <mainClass>Authentication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

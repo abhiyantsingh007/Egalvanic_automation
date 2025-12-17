@@ -79,7 +79,7 @@ public class Authentication {
         summaryFeatureTest = summaryModuleTest.createNode("Login");
         summaryFeatureTest.assignCategory("Login");
         try {
-            System.out.println("Starting Independent Authentication Test Execution");
+            System.out.println("🧪 Starting Independent Authentication Test Execution");
             
             // Run all test cases independently
             runTestCaseIndependently("TC01_ValidCredentials");
@@ -96,8 +96,8 @@ public class Authentication {
             runTestCaseIndependently("TC12_LeadingSpacePassword");
              runTestCaseIndependently("TC13_OnlySpacesPassword");
             runTestCaseIndependently("TC14_MinLengthPassword");
-            runTestCaseIndependently("TC15_MaxLengthPassword");
-            runTestCaseIndependently("TC16_SQLInjectionUsername");
+           runTestCaseIndependently("TC15_MaxLengthPassword");
+           runTestCaseIndependently("TC16_SQLInjectionUsername");
             runTestCaseIndependently("TC17_XSSUsername");
             runTestCaseIndependently("TC18_ErrorMessageCleared");
              runTestCaseIndependently("TC19_AccessDashboardWithoutLogin");
@@ -277,10 +277,7 @@ public class Authentication {
         summaryExtent.setSystemInfo("Tester", "QA Automation Engineer");
         summaryExtent.setSystemInfo("Java Version", System.getProperty("java.version"));
         summaryExtent.setSystemInfo("OS", System.getProperty("os.name"));
-    }    
-    
-    // Fix the HTTP client issue by configuring the Chrome driver properly
-    static void setupDriver(String browserType) {
+    }    static void setupDriver(String browserType) {
         switch(browserType.toLowerCase()) {
             case "firefox":
                 WebDriverManager.firefoxdriver().setup();
@@ -313,8 +310,6 @@ public class Authentication {
                 chromeOpts.addArguments("--disable-dev-shm-usage");
                 chromeOpts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
                 chromeOpts.setExperimentalOption("useAutomationExtension", false);
-                
-                // HTTP client factory is now set in static block at class level
                 driver = new ChromeDriver(chromeOpts);
                 driver.manage().window().maximize();
                 break;
@@ -364,7 +359,7 @@ public class Authentication {
             String fname = name + "_" + stamp() + ".png";
             String destPath = "test-output/screenshots/" + fname;
             Files.copy(src.toPath(), Path.of(destPath));
-            System.out.println("Screenshot saved: " + fname);
+            System.out.println("✔ Screenshot saved: " + fname);
 
             byte[] fileContent = Files.readAllBytes(Path.of(destPath));
             String base64Image = java.util.Base64.getEncoder().encodeToString(fileContent);
@@ -687,17 +682,17 @@ public class Authentication {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'Invalid')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "TC08 PASSED: System rejected username with special characters");
+                    test.log(Status.PASS, "✅ TC08 PASSED: System rejected username with special characters");
                 } else {
-                    test.log(Status.WARNING, "TC08: No clear rejection of special characters");
+                    test.log(Status.WARNING, "⚠️ TC08: No clear rejection of special characters");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "TC08: Could not locate validation message for special characters");
+                test.log(Status.WARNING, "⚠️ TC08: Could not locate validation message for special characters");
             }
             takeShotAndAttachReport("tc08_result", "TC08 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC08 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC08 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc08_error", "TC08 Error", test);
             failedTests++;
         }
@@ -718,14 +713,14 @@ public class Authentication {
             
             // Check result
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.WARNING, "TC09: Login succeeded with numeric-only username");
+                test.log(Status.WARNING, "⚠️ TC09: Login succeeded with numeric-only username");
             } else {
-                test.log(Status.PASS, "TC09 PASSED: Login failed with numeric-only username");
+                test.log(Status.PASS, "✅ TC09 PASSED: Login failed with numeric-only username");
             }
             takeShotAndAttachReport("tc09_result", "TC09 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC09 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC09 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc09_error", "TC09 Error", test);
             failedTests++;
         }
@@ -746,14 +741,14 @@ public class Authentication {
             
             // Check result - depends on system implementation
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "TC10 PASSED: Username is not case-sensitive");
+                test.log(Status.PASS, "✅ TC10 PASSED: Username is not case-sensitive");
             } else {
-                test.log(Status.INFO, "TC10: Username appears to be case-sensitive");
+                test.log(Status.INFO, "ℹ️ TC10: Username appears to be case-sensitive");
             }
             takeShotAndAttachReport("tc10_result", "TC10 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC10 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC10 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc10_error", "TC10 Error", test);
             failedTests++;
         }
@@ -783,17 +778,17 @@ public class Authentication {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'too long')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "TC11 PASSED: Validation message shown for excessively long username");
+                    test.log(Status.PASS, "✅ TC11 PASSED: Validation message shown for excessively long username");
                 } else {
-                    test.log(Status.WARNING, "TC11: No validation for excessively long username");
+                    test.log(Status.WARNING, "⚠️ TC11: No validation for excessively long username");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "TC11: Could not locate validation message for long username");
+                test.log(Status.WARNING, "⚠️ TC11: Could not locate validation message for long username");
             }
             takeShotAndAttachReport("tc11_result", "TC11 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC11 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC11 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc11_error", "TC11 Error", test);
             failedTests++;
         }
@@ -814,14 +809,14 @@ public class Authentication {
             
             // Check result - should fail as password with space is different
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.WARNING, "TC12: Login succeeded with leading space in password - potential security issue");
+                test.log(Status.WARNING, "⚠️ TC12: Login succeeded with leading space in password - potential security issue");
             } else {
-                test.log(Status.PASS, "TC12 PASSED: Login failed with leading space in password");
+                test.log(Status.PASS, "✅ TC12 PASSED: Login failed with leading space in password");
             }
             takeShotAndAttachReport("tc12_result", "TC12 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC12 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC12 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc12_error", "TC12 Error", test);
             failedTests++;
         }
@@ -844,17 +839,17 @@ public class Authentication {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'required')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "TC13 PASSED: Validation message shown for password with only spaces");
+                    test.log(Status.PASS, "✅ TC13 PASSED: Validation message shown for password with only spaces");
                 } else {
-                    test.log(Status.FAIL, "TC13 FAILED: No validation message for password with only spaces");
+                    test.log(Status.FAIL, "❌ TC13 FAILED: No validation message for password with only spaces");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "TC13: Could not locate validation message");
+                test.log(Status.WARNING, "⚠️ TC13: Could not locate validation message");
             }
             takeShotAndAttachReport("tc13_result", "TC13 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC13 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC13 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc13_error", "TC13 Error", test);
             failedTests++;
         }
@@ -877,17 +872,17 @@ public class Authentication {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'short')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "TC14 PASSED: Validation message shown for short password");
+                    test.log(Status.PASS, "✅ TC14 PASSED: Validation message shown for short password");
                 } else {
-                    test.log(Status.WARNING, "TC14: No validation for short password");
+                    test.log(Status.WARNING, "⚠️ TC14: No validation for short password");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "TC14: Could not locate validation message for short password");
+                test.log(Status.WARNING, "⚠️ TC14: Could not locate validation message for short password");
             }
             takeShotAndAttachReport("tc14_result", "TC14 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC14 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC14 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc14_error", "TC14 Error", test);
             failedTests++;
         }
@@ -916,17 +911,17 @@ public class Authentication {
             try {
                 WebElement errorMsg = driver.findElement(By.xpath("//div[contains(@class,'error') or contains(text(),'too long')]"));
                 if (errorMsg.isDisplayed()) {
-                    test.log(Status.PASS, "TC15 PASSED: Validation message shown for excessively long password");
+                    test.log(Status.PASS, "✅ TC15 PASSED: Validation message shown for excessively long password");
                 } else {
-                    test.log(Status.WARNING, "TC15: No validation for excessively long password");
+                    test.log(Status.WARNING, "⚠️ TC15: No validation for excessively long password");
                 }
             } catch (Exception ex) {
-                test.log(Status.WARNING, "TC15: Could not locate validation message for long password");
+                test.log(Status.WARNING, "⚠️ TC15: Could not locate validation message for long password");
             }
             takeShotAndAttachReport("tc15_result", "TC15 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC15 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC15 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc15_error", "TC15 Error", test);
             failedTests++;
         }
@@ -947,14 +942,14 @@ public class Authentication {
             
             // Check that system handles it securely
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.FAIL, "TC16 FAILED: SQL injection attempt succeeded - major security vulnerability");
+                test.log(Status.FAIL, "❌ TC16 FAILED: SQL injection attempt succeeded - major security vulnerability");
             } else {
-                test.log(Status.PASS, "TC16 PASSED: SQL injection attempt properly rejected");
+                test.log(Status.PASS, "✅ TC16 PASSED: SQL injection attempt properly rejected");
             }
             takeShotAndAttachReport("tc16_result", "TC16 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.PASS, "TC16 PASSED: Exception occurred, likely preventing SQL injection: " + e.getMessage());
+            test.log(Status.PASS, "✅ TC16 PASSED: Exception occurred, likely preventing SQL injection: " + e.getMessage());
             takeShotAndAttachReport("tc16_error", "TC16 Error", test);
             passedTests++;
         }
@@ -975,14 +970,14 @@ public class Authentication {
             
             // Check that system sanitizes input
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.FAIL, "TC17 FAILED: XSS attempt succeeded - major security vulnerability");
+                test.log(Status.FAIL, "❌ TC17 FAILED: XSS attempt succeeded - major security vulnerability");
             } else {
-                test.log(Status.PASS, "TC17 PASSED: XSS attempt properly rejected");
+                test.log(Status.PASS, "✅ TC17 PASSED: XSS attempt properly rejected");
             }
             takeShotAndAttachReport("tc17_result", "TC17 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.PASS, "TC17 PASSED: Exception occurred, likely preventing XSS: " + e.getMessage());
+            test.log(Status.PASS, "✅ TC17 PASSED: Exception occurred, likely preventing XSS: " + e.getMessage());
             takeShotAndAttachReport("tc17_error", "TC17 Error", test);
             passedTests++;
         }
@@ -1012,14 +1007,14 @@ public class Authentication {
             
             // Check if we're logged in (error cleared and valid login worked)
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "TC18 PASSED: Error message cleared and valid login succeeded");
+                test.log(Status.PASS, "✅ TC18 PASSED: Error message cleared and valid login succeeded");
             } else {
-                test.log(Status.FAIL, "TC18 FAILED: Valid login after error did not succeed");
+                test.log(Status.FAIL, "❌ TC18 FAILED: Valid login after error did not succeed");
             }
             takeShotAndAttachReport("tc18_result", "TC18 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC18 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC18 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc18_error", "TC18 Error", test);
             failedTests++;
         }
@@ -1036,16 +1031,16 @@ public class Authentication {
             
             // Check if redirected to login
             if (driver.getCurrentUrl().contains("login")) {
-                test.log(Status.PASS, "TC19 PASSED: Unauthorized access redirected to login page");
+                test.log(Status.PASS, "✅ TC19 PASSED: Unauthorized access redirected to login page");
             } else if (driver.getCurrentUrl().contains("dashboard")) {
-                test.log(Status.FAIL, "TC19 FAILED: Unauthorized access to dashboard permitted");
+                test.log(Status.FAIL, "❌ TC19 FAILED: Unauthorized access to dashboard permitted");
             } else {
-                test.log(Status.WARNING, "TC19: Unexpected redirect behavior");
+                test.log(Status.WARNING, "⚠️ TC19: Unexpected redirect behavior");
             }
             takeShotAndAttachReport("tc19_result", "TC19 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC19 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC19 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc19_error", "TC19 Error", test);
             failedTests++;
         }
@@ -1074,16 +1069,16 @@ public class Authentication {
             
             // Check if still logged in
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "TC20 PASSED: Session persisted after browser refresh");
+                test.log(Status.PASS, "✅ TC20 PASSED: Session persisted after browser refresh");
             } else if (driver.getCurrentUrl().contains("login")) {
-                test.log(Status.WARNING, "TC20: Session not persisted after refresh");
+                test.log(Status.WARNING, "⚠️ TC20: Session not persisted after refresh");
             } else {
-                test.log(Status.WARNING, "TC20: Unexpected behavior after refresh");
+                test.log(Status.WARNING, "⚠️ TC20: Unexpected behavior after refresh");
             }
             takeShotAndAttachReport("tc20_result", "TC20 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC20 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC20 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc20_error", "TC20 Error", test);
             failedTests++;
         }
@@ -1106,14 +1101,14 @@ public class Authentication {
             
             // Check if login succeeded
             if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.PASS, "TC21 PASSED: Login successful using Enter key");
+                test.log(Status.PASS, "✅ TC21 PASSED: Login successful using Enter key");
             } else {
-                test.log(Status.FAIL, "TC21 FAILED: Login unsuccessful using Enter key");
+                test.log(Status.FAIL, "❌ TC21 FAILED: Login unsuccessful using Enter key");
             }
             takeShotAndAttachReport("tc21_result", "TC21 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC21 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC21 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc21_error", "TC21 Error", test);
             failedTests++;
         }
@@ -1147,16 +1142,16 @@ public class Authentication {
             
             // Check if still on login page or redirected to login
             if (driver.getCurrentUrl().contains("login")) {
-                test.log(Status.PASS, "TC22 PASSED: Back button correctly redirects to login page");
+                test.log(Status.PASS, "✅ TC22 PASSED: Back button correctly redirects to login page");
             } else if (driver.getCurrentUrl().contains("dashboard") || driver.getCurrentUrl().contains("sites")) {
-                test.log(Status.FAIL, "TC22 FAILED: Back button restored session - security vulnerability");
+                test.log(Status.FAIL, "❌ TC22 FAILED: Back button restored session - security vulnerability");
             } else {
-                test.log(Status.WARNING, "TC22: Unexpected behavior with back button");
+                test.log(Status.WARNING, "⚠️ TC22: Unexpected behavior with back button");
             }
             takeShotAndAttachReport("tc22_result", "TC22 Result", test);
             passedTests++;
         } catch (Exception e) {
-            test.log(Status.FAIL, "TC22 FAILED: " + e.getMessage());
+            test.log(Status.FAIL, "❌ TC22 FAILED: " + e.getMessage());
             takeShotAndAttachReport("tc22_error", "TC22 Error", test);
             failedTests++;
         }
