@@ -48,7 +48,6 @@ The application uses a property file for configuration located at `src/main/reso
 # Application Configuration
 base.url=https://acme.qa.egalvanic.ai
 user.email=rahul+acme@egalvanic.com
-user.password=RP@egalvanic123
 
 # Test Configuration
 default.timeout=25
